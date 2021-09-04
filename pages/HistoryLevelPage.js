@@ -1,8 +1,11 @@
-import React, { Children } from 'react';
+import { StatusBar } from 'expo-status-bar';
+import React, { useState, useEffect, children } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Text, View, StyleSheet, Image } from 'react-native';
+import { StyleSheet, Text, View, FlatList, TouchableOpacity } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import styled from 'styled-components';
 import Svg, { Path } from 'react-native-svg';
+import _ from "lodash"
 
 
 const Background = ({ children }) => {
@@ -32,8 +35,8 @@ const TopBar = styled.View`
 const TopBarText = styled.Text`
     font-family: Nunito-BoldItalic;
     font-style: normal;
-    font-weight: normal;
-    font-size: 40px;
+    font-weight: bold;
+    font-size: 30px;
     line-height: 55px;
     display: flex;
     align-items: center;
@@ -49,47 +52,133 @@ const BatIcon = styled.View`
     top: 29px;
         
 `;
-
-
+// position: absolute;
+// left: 3.73%;
+// right: 82.93%;
+// top: 10px;
+// bottom: 93.1%;  
 const ArrowIcon = styled.View`
-    position: absolute;
-    left: 3.73%;
-    right: 82.93%;
-    top: 10px;
-    bottom: 93.1%;       
-`;
 
-const LevelText = styled.Text`    
-    top: 150px;
-
-    font-family: Nunito;
-    font-style: normal;
-    font-weight: 600;
-    font-size: 24px;
+    position: absolute; 
     
-    text-align: center;
-
-    color: #FFFFFF;
-`;
-
-// Talvez abaixar mais a caixa dagua verificar depois
-const WaterTank = styled.View`
-    top: 200px;
-    justify-content: center;
-    align-items: center; 
-`;
-
-const Buttons = styled.View`    
-    top: 200px;
-    justify-content: center;
-    align-items: center; 
+    left: 2%;
+    
+    top: 38px;
 `;
 
 
+export function HistoryLevelPage() {
 
-export function MyLevelPage (){
-    return(
-        <Background>
+    const [ columns, setColumns ] = useState([
+        "Bateria(%)",
+        "Hora",
+        "Data",
+      ])
+      const [ direction, setDirection ] = useState(null)
+      const [ selectedColumn, setSelectedColumn ] = useState(null)
+      const [ logs, setlogs ] = useState([
+        {
+            Bateria: "70%",
+            Hora: "04:00",
+            Data: "04/09/2021",
+        },
+        {
+            Bateria: "70%",
+            Hora: "04:00",
+            Data: "04/09/2021",
+        },
+        {
+            Bateria: "70%",
+            Hora: "04:00",
+            Data: "04/09/2021",
+        },
+        {
+            Bateria: "70%",
+            Hora: "04:00",
+            Data: "04/09/2021",
+        },
+        {
+            Bateria: "70%",
+            Hora: "04:00",
+            Data: "04/09/2021",
+        },
+        {
+            Bateria: "70%",
+            Hora: "04:00",
+            Data: "04/09/2021",
+        },
+        {
+            Bateria: "70%",
+            Hora: "04:00",
+            Data: "04/09/2021",
+        },
+        {
+            Bateria: "70%",
+            Hora: "04:00",
+            Data: "04/09/2021",
+        },
+        {
+            Bateria: "70%",
+            Hora: "04:00",
+            Data: "04/09/2021",
+        },
+        {
+            Bateria: "70%",
+            Hora: "04:00",
+            Data: "04/09/2021",
+        },
+        
+        {
+            Bateria: "80%",
+            Hora: "03:00",
+            Data: "04/09/2021",
+        },
+        {
+            Bateria: "90%",
+            Hora: "02:00",
+            Data: "04/09/2021",
+        },
+        {
+            Bateria: "100%",
+            Hora: "01:00",
+            Data: "04/09/2021",
+        }
+      ])
+    
+      const sortTable = (column) => {
+        const newDirection = direction === "desc" ? "asc" : "desc" 
+        const sortedData = _.orderBy(logs, [column],[newDirection])
+        setSelectedColumn(column)
+        setDirection(newDirection)
+        setlogs(sortedData)
+      }
+      const tableHeader = () => (
+        <View style={styles.tableHeader}>
+          {
+            columns.map((column, index) => {
+              {
+                return (
+                  <TouchableOpacity 
+                    key={index}
+                    style={styles.columnHeader} 
+                    onPress={()=> sortTable(column)}>
+                    <Text style={styles.columnHeaderTxt}>{column + " "} 
+                      { selectedColumn === column && <MaterialCommunityIcons 
+                          name={direction === "desc" ? "arrow-down-drop-circle" : "arrow-up-drop-circle"} 
+                        />
+                      }
+                    </Text>
+                  </TouchableOpacity>
+                )
+              }
+            })
+          }
+        </View>
+      )
+
+  return (
+      <Background>
+        <View style={styles.container}>
             <TopBar>
                 <BatIcon>
                     {/* Bat 100% */}
@@ -119,8 +208,8 @@ export function MyLevelPage (){
                     
                 </BatIcon>
 
-                {/* <ArrowIcon>
-                    <Svg width="56" height="48" viewBox="0 0 56 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <ArrowIcon>
+                    <Svg width="44.8" height="38.4" viewBox="0 0 56 48" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <Path fillRule="evenodd" clipRule="evenodd" d="M53 24H3.00008Z" fill="white"/>
                         <Path d="M53 24H3.00008" stroke="white" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round"/>
                         <Path fillRule="evenodd" clipRule="evenodd" d="M3.00007 24L28.1946 3Z" fill="white"/>
@@ -128,47 +217,88 @@ export function MyLevelPage (){
                         <Path fillRule="evenodd" clipRule="evenodd" d="M3.00007 24L28.1946 45Z" fill="white"/>
                         <Path d="M3.00007 24L28.1946 45" stroke="white" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round"/>
                     </Svg>
-                </ArrowIcon> */}
+                </ArrowIcon>
 
-                <TopBarText>Meu nível</TopBarText>
+                <TopBarText>Histórico da Bateria</TopBarText>
             </TopBar>
-
-                <LevelText>
-                    Leitura atual
-                    {"\n"}
-                    xx:xx
-                    {"\n"}
-                    xx/xx/xxxx
-                </LevelText>
-            <WaterTank>
-                {/* <Image source={require('../assets/waterTank100.png')}/> */}
-                {/* <Image source={require('../assets/waterTank95.png')}/> */}
-                {/* <Image source={require('../assets/waterTank90.png')}/> */}
-                {/* <Image source={require('../assets/waterTank85.png')}/> */}
-                {/* <Image source={require('../assets/waterTank80.png')}/> */}
-                {/* <Image source={require('../assets/waterTank75.png')}/> */}
-                {/* <Image source={require('../assets/waterTank70.png')}/> */}
-                {/* <Image source={require('../assets/waterTank65.png')}/> */}
-                {/* <Image source={require('../assets/waterTank60.png')}/> */}
-                {/* <Image source={require('../assets/waterTank50.png')}/> */}
-                {/* <Image source={require('../assets/waterTank45.png')}/> */}
-                {/* <Image source={require('../assets/waterTank40.png')}/> */}
-                {/* <Image source={require('../assets/waterTank35.png')}/> */}
-                {/* <Image source={require('../assets/waterTank30.png')}/> */}
-                {/* <Image source={require('../assets/waterTank25.png')}/> */}
-                {/* <Image source={require('../assets/waterTank20.png')}/> */}
-                {/* <Image source={require('../assets/waterTank15.png')}/> */}
-                {/* <Image source={require('../assets/waterTank10.png')}/> */}
-                <Image source={require('../assets/waterTank5.png')}/>
-                {/* <Image source={require('../assets/waterTank0.png')}/> */}
-            </WaterTank>
-
-            <Buttons>
-                <Image 
-                style={{ margin: 20 }}
-                source={require('../assets/settingsButton.png')}/>
-                <Image source={require('../assets/historyButton.png')}/>
-            </Buttons>
-        </Background>
-    )
+            <FlatList 
+                data={logs}
+                style={{width:"90%"}}
+                keyExtractor={(item, index) => index+""}
+                ListHeaderComponent={tableHeader}
+                stickyHeaderIndices={[0]}
+                renderItem={({item, index})=> {
+                return (
+                    <View style={{...styles.tableRow, backgroundColor: index % 2 == 1 ? "white" : "white"}}>
+                        <View  style={styles.columnRowView}>
+                            <Text style={styles.columnRowTxt}>{item.Bateria}</Text>   
+                        </View> 
+                        <View style={styles.columnRowView}>
+                            <Text style={styles.columnRowTxt}>{item.Data}</Text>   
+                        </View> 
+                        <View style={styles.columnRowView}>
+                            <Text style={styles.columnRowTxt}>{item.Hora}</Text>   
+                        </View> 
+                    </View>
+                )
+                }}
+            />
+            <StatusBar style="auto" />
+        </View>
+      </Background>
+  );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingTop:120
+  },
+  tableHeader: {
+    flexDirection: "row",
+    justifyContent: "space-evenly",
+    alignItems: "center",
+    backgroundColor: "#004179",
+    borderTopEndRadius: 10,
+    borderTopStartRadius: 10,
+    height: 50
+  },
+  tableRow: {
+    flexDirection: "row",
+    height: 47,
+    alignItems:"center",
+    borderRadius: 5,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.8,
+    shadowRadius: 2,
+    elevation: 1,
+    marginLeft: 2,
+    marginRight: 2,
+    marginTop: 5,
+  },
+  columnHeader: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems:"center",
+
+  },
+  columnHeaderTxt: {
+    color: "white",
+    fontWeight: "bold",
+    
+    fontSize: 18,
+    
+  },
+  columnRowTxt: {
+    textAlign: "center",
+    fontSize: 18,
+
+  },
+  columnRowView: {
+    flex: 1,  }
+});
