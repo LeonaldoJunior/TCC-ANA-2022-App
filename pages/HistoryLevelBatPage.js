@@ -67,10 +67,10 @@ const ArrowIcon = styled.View`
 `;
 
 
-export function HistoryLevelPage() {
+export function HistoryLevelBatPage() {
 
     const [ columns, setColumns ] = useState([
-        "Nível(cm)",
+        "Bateria(%)",
         "Hora",
         "Data",
       ])
@@ -78,50 +78,71 @@ export function HistoryLevelPage() {
       const [ selectedColumn, setSelectedColumn ] = useState(null)
       const [ logs, setlogs ] = useState([
         {
-            Nivel: "20",
+            Bateria: "70%",
             Hora: "04:00",
             Data: "04/09/2021",
         },
         {
-            Nivel: "30",
+            Bateria: "70%",
             Hora: "04:00",
             Data: "04/09/2021",
         },
         {
-            Nivel: "40",
+            Bateria: "70%",
             Hora: "04:00",
             Data: "04/09/2021",
         },
         {
-            Nivel: "50",
+            Bateria: "70%",
             Hora: "04:00",
             Data: "04/09/2021",
         },
         {
-            Nivel: "60",
+            Bateria: "70%",
             Hora: "04:00",
             Data: "04/09/2021",
         },
         {
-            Nivel: "70",
+            Bateria: "70%",
             Hora: "04:00",
             Data: "04/09/2021",
         },
         {
-            Nivel: "85",
+            Bateria: "70%",
             Hora: "04:00",
             Data: "04/09/2021",
         },
         {
-            Nivel: "90",
+            Bateria: "70%",
             Hora: "04:00",
             Data: "04/09/2021",
         },
         {
-            Nivel: "100",
+            Bateria: "70%",
             Hora: "04:00",
             Data: "04/09/2021",
         },
+        {
+            Bateria: "70%",
+            Hora: "04:00",
+            Data: "04/09/2021",
+        },
+        
+        {
+            Bateria: "80%",
+            Hora: "03:00",
+            Data: "04/09/2021",
+        },
+        {
+            Bateria: "90%",
+            Hora: "02:00",
+            Data: "04/09/2021",
+        },
+        {
+            Bateria: "100%",
+            Hora: "01:00",
+            Data: "04/09/2021",
+        }
       ])
     
       const sortTable = (column) => {
@@ -198,7 +219,7 @@ export function HistoryLevelPage() {
                     </Svg>
                 </ArrowIcon>
 
-                <TopBarText>Histórico do nível</TopBarText>
+                <TopBarText>Histórico da Bateria</TopBarText>
             </TopBar>
             <FlatList 
                 data={logs}
@@ -210,7 +231,7 @@ export function HistoryLevelPage() {
                 return (
                     <View style={{...styles.tableRow, backgroundColor: index % 2 == 1 ? "white" : "white"}}>
                         <View  style={styles.columnRowView}>
-                            <Text style={styles.columnRowTxt}>{item.Nivel}</Text>   
+                            <Text style={styles.columnRowTxt}>{item.Bateria}</Text>   
                         </View> 
                         <View style={styles.columnRowView}>
                             <Text style={styles.columnRowTxt}>{item.Data}</Text>   
