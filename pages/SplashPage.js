@@ -23,6 +23,9 @@ const Background = ({ children }) => {
     )
 }
 
+
+
+
 export function SplashPage(){
     const edges = useSafeAreaInsets();
 
@@ -103,6 +106,7 @@ export function SplashPage(){
                         // ]
                     }}
                     ></Animated.Image> */}
+                    
                     <Animated.View style={{
                         transform: [
                             {translateX: moveLogo.x},   

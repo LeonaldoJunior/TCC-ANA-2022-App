@@ -9,56 +9,52 @@ import _ from "lodash"
 import Battery from '../assets/battery100.png'
 import backArrow from '../assets/backArrow.png'
 
+import { useFonts } from 'expo-font'
+
 const Background = ({ children }) => {
-    return(
-        <LinearGradient
-        colors={['#04A1FF','#8BD3FF','#FFFFFF']}
-        style={{
-            flex: 1,
+  return(
+    <LinearGradient
+      colors={['#04A1FF','#8BD3FF','#FFFFFF']}
+      style={{
+        flex: 1,
 
-        }}
-        >
-
-            {children}
-        </LinearGradient>
-    )
+      }}
+    >
+      {children}
+    </LinearGradient>
+  )
 }
 
 const TopBar = styled.View`
-    flex-direction: row;
-    left: 0px;
-    top: 0px;
-    width: 100%;
-    height: 98px;
-    background: #0052B9;
-    align-items: center;
-    justify-content: space-between;
+  flex-direction: row;
+  left: 0px;
+  top: 0px;
+  width: 100%;
+  height: 98px;
+  background: #0052B9;
+  align-items: center;
+  justify-content: space-between;
     
 `;
 const TopBarText = styled.Text`
-    font-family: Nunito-BoldItalic;
-    font-style: normal;
-    font-weight: bold;
-    font-size: 30px;
-    line-height: 55px;
-    align-items: center;
-    text-align: center;
-    color: #FFFFFF;
-    top: 10px;
-    right: 10px;
-
+  font-family: nunitoBold;
+  font-style: normal;
+  font-size: 30px;
+  line-height: 55px;
+  align-items: center;
+  text-align: center;
+  color: #FFFFFF;
+  top: 10px;
+  right: 10px;
 `;
 const BatIcon = styled.View`
   right: 10px
   top: 10px;
-
 `;
 const ArrowIcon = styled.View`  
   left: 10px
   top: 12px;
 `;
-
-
 
 export function HistoryLevelBatPage( {navigation} ) {
 
@@ -135,7 +131,42 @@ export function HistoryLevelBatPage( {navigation} ) {
             Bateria: "100%",
             Hora: "01:00",
             Data: "04/09/2021",
-        }
+        },
+        {
+          Bateria: "90%",
+          Hora: "02:00",
+          Data: "04/09/2021",
+        },
+        {
+          Bateria: "90%",
+          Hora: "02:00",
+          Data: "04/09/2021",
+        },
+        {
+          Bateria: "90%",
+          Hora: "02:00",
+          Data: "04/09/2021",
+        },
+        {
+          Bateria: "90%",
+          Hora: "02:00",
+          Data: "04/09/2021",
+        },
+        {
+          Bateria: "90%",
+          Hora: "02:00",
+          Data: "04/09/2021",
+        },
+        {
+          Bateria: "90%",
+          Hora: "02:00",
+          Data: "04/09/2021",
+        },
+        {
+          Bateria: "90%",
+          Hora: "02:00",
+          Data: "04/09/2021",
+        },
       ])
 
 
@@ -193,10 +224,18 @@ export function HistoryLevelBatPage( {navigation} ) {
         </View>
       )
 
+  const [loaded] = useFonts({
+    nunitoLight: require("../assets/fonts/Nunito-Light.ttf"),
+    nunitoBold: require("../assets/fonts/Nunito-Bold.ttf")
+  });
+  if(!loaded){
+    return null  
+  }
+
   return (
       <Background>
         <View style={styles.container}>
-        <TopBar>
+          <TopBar>
             <ArrowIcon>
                 <TouchableOpacity
                     // onPress={ () => navigation.navigate('HistoryLevelBatPage')}
@@ -205,37 +244,42 @@ export function HistoryLevelBatPage( {navigation} ) {
                 <Image source={backArrow}></Image>                                   
                 </TouchableOpacity>
             </ArrowIcon>
-            <TopBarText>Histórico do Bateria</TopBarText>
+            <TopBarText>Histórico da Bateria</TopBarText>
               
-            <BatIcon>
+            <BatIcon 
+              style={{
+                transform: [
+                  { scale: .8  }
+                ]
+              }}
+            >
                 <Image source={Battery}></Image>                                   
             </BatIcon>
+          </TopBar>
 
-
-            </TopBar>
-            <FlatList 
-                data={logs}
-                style={{width:"90%"}}
-                keyExtractor={(item, index) => index+""}
-                ListHeaderComponent={tableHeader}
-                stickyHeaderIndices={[0]}
-                renderItem={({item, index})=> {
-                return (
-                    <View style={{...styles.tableRow, backgroundColor: index % 2 == 1 ? "white" : "white"}}>
-                        <View  style={styles.columnRowView}>
-                            <Text style={styles.columnRowTxt}>{item.Bateria}</Text>   
-                        </View> 
-                        <View style={styles.columnRowView}>
-                            <Text style={styles.columnRowTxt}>{item.Data}</Text>   
-                        </View> 
-                        <View style={styles.columnRowView}>
-                            <Text style={styles.columnRowTxt}>{item.Hora}</Text>   
-                        </View> 
-                    </View>
-                )
-                }}
-            />
-            <StatusBar style="auto" />
+          <FlatList 
+            data={logs}
+            style={{top: 20, height: '80%', width:"90%"}}
+            keyExtractor={(item, index) => index+""}
+            ListHeaderComponent={tableHeader}
+            stickyHeaderIndices={[0]}
+            renderItem={({item, index})=> {
+            return (
+                <View style={{...styles.tableRow, backgroundColor: index % 2 == 1 ? "white" : "white"}}>
+                    <View  style={styles.columnRowView}>
+                        <Text style={styles.columnRowTxt}>{item.Bateria}</Text>   
+                    </View> 
+                    <View style={styles.columnRowView}>
+                        <Text style={styles.columnRowTxt}>{item.Data}</Text>   
+                    </View> 
+                    <View style={styles.columnRowView}>
+                        <Text style={styles.columnRowTxt}>{item.Hora}</Text>   
+                    </View> 
+                </View>
+            )
+            }}
+          />
+          <StatusBar style="auto" />
         </View>
       </Background>
   );
@@ -247,7 +291,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   tableHeader: {
-    marginTop: 20,
     flexDirection: "row",
     justifyContent: "space-evenly",
     alignItems: "center",
@@ -260,17 +303,19 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     height: 47,
     alignItems:"center",
-    borderRadius: 5,
+    borderRadius: 10,
     borderWidth: 1,
     borderColor: '#ddd',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.8,
     shadowRadius: 2,
-    elevation: 1,
+    elevation: 1,    
+    marginTop: 5,
+
+
     marginLeft: 2,
     marginRight: 2,
-    marginTop: 5,
   },
   columnHeader: {
     flex: 1,
@@ -281,11 +326,12 @@ const styles = StyleSheet.create({
   columnHeaderTxt: {
     color: "white",
     fontWeight: "bold",
-    
+    fontFamily: 'nunitoBold',
     fontSize: 18,
     
   },
   columnRowTxt: {
+    fontFamily: 'nunitoLight',
     textAlign: "center",
     fontSize: 18,
 

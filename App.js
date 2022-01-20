@@ -11,7 +11,6 @@ import { SplashPage } from './pages/SplashPage';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 
-
 const Stack = createNativeStackNavigator();
 
 export default function App() {
@@ -24,7 +23,7 @@ export default function App() {
           }}
         >
           {/* <Stack.Screen name="SplashPage" component={SplashPage} /> */}
-          {/* <Stack.Screen name="WelcomePage" component={WelcomePage} /> */}
+          <Stack.Screen name="WelcomePage" component={WelcomePage} />
           <Stack.Screen name="MyLevelPage" component={MyLevelPage} />
           <Stack.Screen name="HistoryLevelBatPage" component={HistoryLevelBatPage} />
           <Stack.Screen name="HistoryLevelPage" component={HistoryLevelPage} />
