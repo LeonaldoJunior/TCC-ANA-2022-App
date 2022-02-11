@@ -7,8 +7,7 @@ import Svg, { Path } from 'react-native-svg';
 import backArrow from '../assets/backArrow.png'
 import Battery from '../assets/battery80.png'
 import anaIcon from '../assets/anaIcon.png'
-import api from '../services/api'
-
+import GetCaixasDagua from '../services/GetCaixasDaguaApi'
 import { useFonts } from 'expo-font'
 
 const Background = ({ children }) => {
@@ -114,65 +113,66 @@ export function MyLevelPage( {navigation} ){
          {/* <Image source={require('../assets/waterTank100.png')}/> */}
     ]
 
-    useEffect(() =>{
+
+    // useEffect(() =>{
 
 
-        const interval = setInterval(() => {
+    //     const interval = setInterval(() => {
 
-            // const baseURL= 'https://e9ab-191-5-234-123.ngrok.io/webhook/GetByIdMax/eui-70b3d57ed0046195';
-            const baseURL= "https://0b7e-191-5-234-123.ngrok.io/webhook/GetByIdMax/eui-70b3d57ed0046195";
-            console.log("baseURL")
-            console.log(baseURL)
-            fetch(baseURL)
-                .then(resp => resp.json())
-                .then(json => {
-                    console.log("json");
-                    console.log(json);
-                    console.log("json.analogIn2");
-                    console.log(json.analogIn2*100);
-                    setEndDeviceDataResponse(json);
-                    if (json.analogIn2*100 < 28) { 
-                        console.log("NAO ENTROU NO MENOR 28")
+    //         // const baseURL= 'https://e9ab-191-5-234-123.ngrok.io/webhook/GetByIdMax/eui-70b3d57ed0046195';
+    //         const baseURL= "https://0b7e-191-5-234-123.ngrok.io/webhook/GetByIdMax/eui-70b3d57ed0046195";
+    //         console.log("baseURL")
+    //         console.log(baseURL)
+    //         fetch(baseURL)
+    //             .then(resp => resp.json())
+    //             .then(json => {
+    //                 console.log("json");
+    //                 console.log(json);
+    //                 console.log("json.analogIn2");
+    //                 console.log(json.analogIn2*100);
+    //                 setEndDeviceDataResponse(json);
+    //                 if (json.analogIn2*100 < 28) { 
+    //                     console.log("NAO ENTROU NO MENOR 28")
                         
-                        setLevelImage(images[1])} else
-                    if (json.analogIn2*100 < 37.55 && json.analogIn2*100 > 28) {                 
-                        setLevelImage(images[2]);
+    //                     setLevelImage(images[1])} else
+    //                 if (json.analogIn2*100 < 37.55 && json.analogIn2*100 > 28) {                 
+    //                     setLevelImage(images[2]);
                         
-                        console.log("levelImage")
-                        console.log(levelImage)
-                    } else
-                    if (json.analogIn2*100 < 46.1 && json.analogIn2*100 > 37.55) { setLevelImage(images[3]) } else
-                    if (json.analogIn2*100 < 54.65 && json.analogIn2*100 > 46.1) { setLevelImage(images[4]) } else
-                    if (json.analogIn2*100 < 63.2 && json.analogIn2*100 > 54.65) { setLevelImage(images[5]) } else
-                    if (json.analogIn2*100 < 71.75 && json.analogIn2*100 > 63.2) { setLevelImage(images[6]) } else
-                    if (json.analogIn2*100 < 80.3 && json.analogIn2*100 > 71.75) { setLevelImage(images[7]) } else
-                    if (json.analogIn2*100 < 88.85 && json.analogIn2*100 > 80.3) { setLevelImage(images[8]) } else
-                    if (json.analogIn2*100 < 97.4 && json.analogIn2*100 > 88.85) { setLevelImage(images[9]) } else
-                    if (json.analogIn2*100 < 105.95 && json.analogIn2*100 > 97.4) { setLevelImage(images[10]) } else
-                    if (json.analogIn2*100 < 114.5 && json.analogIn2*100 > 105.95) { setLevelImage(images[11]) } else
-                    if (json.analogIn2*100 < 123.05 && json.analogIn2*100 > 114.5) { setLevelImage(images[12]) } else
-                    if (json.analogIn2*100 < 131.6 && json.analogIn2*100 > 123.05) { setLevelImage(images[13]) } else
-                    if (json.analogIn2*100 < 140.15 && json.analogIn2*100 > 131.6) { setLevelImage(images[14]) } else
-                    if (json.analogIn2*100 < 148.7 && json.analogIn2*100 > 140.15) { setLevelImage(images[15]) } else
-                    if (json.analogIn2*100 < 157.25 && json.analogIn2*100 > 148.7) { setLevelImage(images[16]) } else
-                    if (json.analogIn2*100 < 165.8 && json.analogIn2*100 > 157.25) { setLevelImage(images[17]) } else
-                    if (json.analogIn2*100 < 174.35 && json.analogIn2*100 > 165.8) { setLevelImage(images[18]) } else
-                    if (json.analogIn2*100 < 182.9 && json.analogIn2*100 > 174.35) { setLevelImage(images[19]) } else
-                    if (json.analogIn2*100 > 191.45) { setLevelImage(images[20]) }
+    //                     console.log("levelImage")
+    //                     console.log(levelImage)
+    //                 } else
+    //                 if (json.analogIn2*100 < 46.1 && json.analogIn2*100 > 37.55) { setLevelImage(images[3]) } else
+    //                 if (json.analogIn2*100 < 54.65 && json.analogIn2*100 > 46.1) { setLevelImage(images[4]) } else
+    //                 if (json.analogIn2*100 < 63.2 && json.analogIn2*100 > 54.65) { setLevelImage(images[5]) } else
+    //                 if (json.analogIn2*100 < 71.75 && json.analogIn2*100 > 63.2) { setLevelImage(images[6]) } else
+    //                 if (json.analogIn2*100 < 80.3 && json.analogIn2*100 > 71.75) { setLevelImage(images[7]) } else
+    //                 if (json.analogIn2*100 < 88.85 && json.analogIn2*100 > 80.3) { setLevelImage(images[8]) } else
+    //                 if (json.analogIn2*100 < 97.4 && json.analogIn2*100 > 88.85) { setLevelImage(images[9]) } else
+    //                 if (json.analogIn2*100 < 105.95 && json.analogIn2*100 > 97.4) { setLevelImage(images[10]) } else
+    //                 if (json.analogIn2*100 < 114.5 && json.analogIn2*100 > 105.95) { setLevelImage(images[11]) } else
+    //                 if (json.analogIn2*100 < 123.05 && json.analogIn2*100 > 114.5) { setLevelImage(images[12]) } else
+    //                 if (json.analogIn2*100 < 131.6 && json.analogIn2*100 > 123.05) { setLevelImage(images[13]) } else
+    //                 if (json.analogIn2*100 < 140.15 && json.analogIn2*100 > 131.6) { setLevelImage(images[14]) } else
+    //                 if (json.analogIn2*100 < 148.7 && json.analogIn2*100 > 140.15) { setLevelImage(images[15]) } else
+    //                 if (json.analogIn2*100 < 157.25 && json.analogIn2*100 > 148.7) { setLevelImage(images[16]) } else
+    //                 if (json.analogIn2*100 < 165.8 && json.analogIn2*100 > 157.25) { setLevelImage(images[17]) } else
+    //                 if (json.analogIn2*100 < 174.35 && json.analogIn2*100 > 165.8) { setLevelImage(images[18]) } else
+    //                 if (json.analogIn2*100 < 182.9 && json.analogIn2*100 > 174.35) { setLevelImage(images[19]) } else
+    //                 if (json.analogIn2*100 > 191.45) { setLevelImage(images[20]) }
 
-                    console.log("levelImage")
-                    console.log(levelImage)
-                })
-                .catch((error) => alert(error))
+    //                 console.log("levelImage")
+    //                 console.log(levelImage)
+    //             })
+    //             .catch((error) => alert(error))
      
 
 
-        }, 10000);
-          return () => clearInterval(interval);
+    //     }, 10000);
+    //       return () => clearInterval(interval);
 
         
        
-    }, [])
+    // }, [])
 
     const [loaded] = useFonts({
         nunitoLight: require("../assets/fonts/Nunito-Light.ttf"),
@@ -234,15 +234,17 @@ export function MyLevelPage( {navigation} ){
             </WaterTank>
 
             <Buttons>
-                <Image 
-                style={{ margin: 20 }}
-                source={require('../assets/settingsButton.png')}/>
 
                 <TouchableOpacity
-                    onPress={ () => navigation.navigate('HistoryLevelPage')}
-                >
-                    <Image source={require('../assets/historyButton.png')}/>
+                    onPress={ () => navigation.navigate('Devices')}>
+                    <Image 
+                        style={{ margin: 20 }}
+                        source={require('../assets/devices.png')}/>
 
+                </TouchableOpacity>
+                <TouchableOpacity
+                    onPress={ () => navigation.navigate('HistoryLevelP  age')}>
+                    <Image source={require('../assets/historyButton.png')}/>
                 </TouchableOpacity>
 
 
