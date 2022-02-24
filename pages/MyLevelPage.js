@@ -9,6 +9,7 @@ import Battery from '../assets/battery80.png'
 import anaIcon from '../assets/anaIcon.png'
 import GetCaixasDagua from '../services/GetCaixasDaguaApi'
 import { useFonts } from 'expo-font'
+import AsyncStorage  from '@react-native-async-storage/async-storage';
 
 const Background = ({ children }) => {
     return(
@@ -85,6 +86,7 @@ export function MyLevelPage( {navigation} ){
     const [isLoading, setIsLoading] = useState(false);
     const [endDeviceDataResponse, setEndDeviceDataResponse] = useState(undefined);
     const [levelImage, setLevelImage] = useState(require("../assets/waterTank0.png"));
+    const [data, setData] = useState({});
 
 
     
@@ -112,6 +114,7 @@ export function MyLevelPage( {navigation} ){
         require("../assets/waterTank0.png"),
          {/* <Image source={require('../assets/waterTank100.png')}/> */}
     ]
+
 
 
     // useEffect(() =>{

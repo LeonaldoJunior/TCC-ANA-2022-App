@@ -1,7 +1,7 @@
 import { StatusBar } from 'expo-status-bar';
 import React, { useState, useEffect, children } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
-import { StyleSheet, Text, View, FlatList, TouchableOpacity, Image, Picker, TextInput } from 'react-native';
+import { StyleSheet, Text, View, FlatList, TouchableOpacity, Image, Picker, TextInput, Alert, Keyboard } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import styled from 'styled-components';
 import Svg, { Path } from 'react-native-svg';
@@ -120,25 +120,39 @@ export function SetNewDevice( {navigation} ) {
     nunitoLight: require("../assets/fonts/Nunito-Light.ttf"),
     nunitoBold: require("../assets/fonts/Nunito-Bold.ttf")
   });
-  const [selectedDevice ,setSelectedDevice] = useState("");
+  const [selectedWaterTank ,setSelectedWaterTank] = useState("");
   const [deviceId ,setDeviceId] = useState("");
   const [deviceName ,setDeviceName] = useState("");
+  const [listWaterTank ,setListWaterTank] = useState([]);
   
  
   useEffect(() => {
     GetCaixasDagua().then((x)=>{
-      console.log(x[15].marca)
+      setListWaterTank(x)
     });
  }, [])
 
+
+
+//  useEffect(() => {
+//   console.log(listWaterTank)
+//   console.log(listWaterTank.length)
+
+//   // listWaterTank.map( (s, i) => {
+//   //  console.log(s.capacidade)
+
+//   // })
+
+// }, [listWaterTank])
+
 //   useEffect(() => {
-//     setSelectedDevice(retrieveData());
+//     setSelectedWaterTank(retrieveData());
 //   }, [])
 
 
   useEffect(() => {
-    console.log(selectedDevice)
-  }, [selectedDevice])
+    console.log(selectedWaterTank)
+  }, [selectedWaterTank])
 
 
     const onChangeDeviceIdInput = (inputString) => {
@@ -146,7 +160,47 @@ export function SetNewDevice( {navigation} ) {
     }
 
     const onChangeNameInput = (inputString) => {
-        setDeviceName(inputString);   
+      setDeviceName(inputString);   
+    }
+
+
+    const showWaterTankOptions = (
+      listWaterTank.map((s,i) => 
+      {return <Picker.Item key={i} value={s.caixaId} label={`${s.marca}: ${s.capacidade} L`}/>})
+    )
+
+
+
+    const saveDevice = async () =>{
+
+      try{
+        const oldDevices = await AsyncStorage.getItem('@deviceList_API')
+
+        let newDevices = JSON.parse(oldDevices);
+        if( !newDevices ){
+          newDevices = []
+        }
+
+
+        let deviceObj = {
+          deviceName: deviceName,
+          deviceId: deviceId,
+          selectedWaterTank: selectedWaterTank
+        }
+
+
+        newDevices.push(deviceObj)
+
+        await AsyncStorage.setItem('@deviceList_API', JSON.stringify(newDevices))     
+        
+        Keyboard.dismiss()
+        Alert.alert("Sucesso", "Novo dispositivo salvo")
+
+      }
+      catch (e){
+        console.log(e)
+        Alert.alert(e);
+      }
     }
 
   // React.useEffect(console.log("ASDASDASDASD"))
@@ -178,44 +232,40 @@ export function SetNewDevice( {navigation} ) {
 
           <InputView>
             <LabelText>ID do dispositivo</LabelText>
-            {/* style={styles.input} */}
             <TextInput
                 onChangeText={onChangeDeviceIdInput}
                 value={deviceId}
                 placeholder="id"
                 keyboardType="default"
             />          
-            </InputView>
+          </InputView>
 
-            <InputView>
-            <LabelText>Nome </LabelText>
+          <InputView>
+            <LabelText>Nome do dispositivo </LabelText>
             {/* style={styles.input} */}
             <TextInput
                 onChangeText={onChangeNameInput}
-                value={deviceId}
+                value={deviceName}
                 placeholder="nome"
                 keyboardType="default"
             />          
-            </InputView>
-
-          <InputView>
-            <LabelText>Selecione a caixa d'água</LabelText>
-            <Picker
-              selectedDevice={selectedDevice}
-              style={{ height: 50, width: 150, border: 10 }}
-              onValueChange={(itemValue, itemIndex) => setSelectedDevice(itemValue)}
-              mode={"dropdown"}
-            >
-              {selectedDevice.length > 0 && selectedDevice.map( (s, i) => {
-                return <Picker.Item key={i} value={s} label={s} />
-              }) }
-
-              <Picker.Item label="1" value="1" />
-              <Picker.Item label="2" value="2" />
-
-
-            </Picker>
           </InputView>
+
+              {listWaterTank.length > 0 
+              && (
+                <InputView>              
+                <LabelText>Selecione a caixa d'água</LabelText>
+                <Picker
+                  selectedValue={selectedWaterTank}
+                  style={{ height: 50, width: 150, border: 10 }}
+                  onValueChange={(itemValue, itemIndex) => setSelectedWaterTank(itemValue)}
+                  mode={"dropdown"}
+                >
+                  {showWaterTankOptions}                
+                </Picker>
+                </InputView>
+              )}
+
 
           <ButtonView>
             <TouchableOpacity 
@@ -226,7 +276,7 @@ export function SetNewDevice( {navigation} ) {
 
           <ButtonView>
             <TouchableOpacity 
-              onPress={() => navigation.navigate('SetNewDevice')}>
+              onPress={saveDevice}>
               <Image source={save}></Image>                                   
             </TouchableOpacity>
           </ButtonView>

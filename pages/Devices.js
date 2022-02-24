@@ -1,7 +1,7 @@
 import { StatusBar } from 'expo-status-bar';
 import React, { useState, useEffect, children } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
-import { StyleSheet, Text, View, FlatList, TouchableOpacity, Image, Picker } from 'react-native';
+import { StyleSheet, Text, View, FlatList, TouchableOpacity, Image, Picker, Alert } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import styled from 'styled-components';
 import Svg, { Path } from 'react-native-svg';
@@ -118,6 +118,7 @@ export function Devices( {navigation} ) {
     nunitoBold: require("../assets/fonts/Nunito-Bold.ttf")
   });
   const [selectedDevice ,setSelectedDevice] = useState("");
+  const [devicesList ,setDevicesList] = useState([]);
   
  
 //   useEffect(() => {
@@ -129,15 +130,67 @@ export function Devices( {navigation} ) {
 //   }, [])
 
 
-  useEffect(() => {
-    console.log(selectedDevice)
-  }, [selectedDevice])
+  // useEffect(() => {
+  //   console.log(selectedDevice)
+  // }, [selectedDevice])
 
   // React.useEffect(storeData)
 
+  useEffect(() => {
+    retrieveDevicesList();
+  }, []);
 
+  useEffect(() => {
+    retrieveDevicecSelected();
+  },[])
 
+  // useEffect(() => {
+  //    devicesList.map((s,i) => console.log(s))
 
+  // }, [devicesList]);
+  
+
+  const retrieveDevicesList = async () => {
+    try {
+      const valueString = await AsyncStorage.getItem('@deviceList_API');
+      const value = JSON.parse(valueString);
+
+      setDevicesList(value);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const retrieveDevicecSelected = async () => {
+    try {
+      const valueString = await AsyncStorage.getItem('@deviceSelected_API');
+      const value = JSON.parse(valueString);
+      console.log(value)
+      
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const storeData = async (item) => {
+    try {
+      await AsyncStorage.setItem('@deviceSelected_API', JSON.stringify(item));
+      Alert.alert("Sucesso", "Dispositivo selectionado com sucesso")
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  
+  const showDeviceList = (
+    devicesList.map((s,i) => 
+    {return <Picker.Item key={i} value={s} label={s.deviceName}/>})
+  )
+
+  const handleSelectDevice = (itemValue, itemIndex) =>{
+    setSelectedDevice(itemValue);
+    storeData(itemValue);
+  }
 
   // React.useEffect(console.log("ASDASDASDASD"))
   return (
@@ -166,22 +219,20 @@ export function Devices( {navigation} ) {
             </BatIcon>
           </TopBar>
           <InputView>
-            <LabelText>Selecione seu dispositivo</LabelText>
-            <Picker
-              selectedDevice={selectedDevice}
-              style={{ height: 50, width: 150, border: 10 }}
-              onValueChange={(itemValue, itemIndex) => setSelectedDevice(itemValue)}
-              mode={"dropdown"}
-            >
-              {selectedDevice.length > 0 && selectedDevice.map( (s, i) => {
-                return <Picker.Item key={i} value={s} label={s} />
-              }) }
-
-              <Picker.Item label="Java" value="java" />
-              <Picker.Item label="JavaScript" value="js" />
-
-
-            </Picker>
+            {devicesList.length > 0 
+              && (
+                <InputView>              
+                <LabelText>Selecione seu dispositivo</LabelText>
+                <Picker
+                  selectedValue={selectedDevice}
+                  style={{ height: 50, width: 150, border: 10 }}
+                  onValueChange={handleSelectDevice}
+                  mode={"dropdown"}
+                >
+                  {showDeviceList}                
+                </Picker>
+                </InputView>
+            )}
           </InputView>
 
           <ButtonView>
