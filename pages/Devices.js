@@ -12,6 +12,7 @@ import AsyncStorage  from '@react-native-async-storage/async-storage';
 import Battery from '../assets/battery100.png'
 import backArrow from '../assets/backArrow.png'
 import newDevice from '../assets/newDevice.png'
+import deleteDevice from '../assets/deleteDevice.png'
 
 
 const Background = ({ children }) => {
@@ -48,9 +49,8 @@ const InputView = styled.View`
 `;
 
 const ButtonView=  styled.View`
-  top: 400px;
+  top: 300px;
 `
-
 const LabelText = styled.Text`
   font-style: normal;
   font-size: 18px;
@@ -80,7 +80,7 @@ const ArrowIcon = styled.View`
 
 // const storeKey = "Devices"
 
-// const storeData = async () => { 
+// const storeSelectedDevice = async () => { 
 //   try {
 //     await AsyncStorage.setItem(storeKey, 'java');
 //     await AsyncStorage.setItem(storeKey, 'css');
@@ -112,17 +112,12 @@ const ArrowIcon = styled.View`
 
 export function Devices( {navigation} ) {
 
-  
-  const [loaded] = useFonts({
-    nunitoLight: require("../assets/fonts/Nunito-Light.ttf"),
-    nunitoBold: require("../assets/fonts/Nunito-Bold.ttf")
-  });
-  const [selectedDevice ,setSelectedDevice] = useState("");
+  const [selectedDevice ,setSelectedDevice] = useState({});
   const [devicesList ,setDevicesList] = useState([]);
   
  
 //   useEffect(() => {
-//     storeData()
+//     storeSelectedDevice()
 //  }, [])
 
 //   useEffect(() => {
@@ -131,18 +126,29 @@ export function Devices( {navigation} ) {
 
 
   // useEffect(() => {
-  //   console.log(selectedDevice)
-  // }, [selectedDevice])
+  //   console.log(devicesList)
+  // }, [devicesList])
 
-  // React.useEffect(storeData)
+  // React.useEffect(storeSelectedDevice)
+
 
   useEffect(() => {
     retrieveDevicesList();
   }, []);
 
   useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      retrieveDevicesList();
+    });
+    return unsubscribe;
+  }, [navigation]);
+
+
+  useEffect(() => {
     retrieveDevicecSelected();
   },[])
+
+
 
   // useEffect(() => {
   //    devicesList.map((s,i) => console.log(s))
@@ -154,8 +160,11 @@ export function Devices( {navigation} ) {
     try {
       const valueString = await AsyncStorage.getItem('@deviceList_API');
       const value = JSON.parse(valueString);
-
-      setDevicesList(value);
+      if(value.length > 0){
+        setDevicesList(value);
+      }else{
+        handleDeviceListNotFound();
+      }
     } catch (error) {
       console.log(error);
     }
@@ -165,14 +174,13 @@ export function Devices( {navigation} ) {
     try {
       const valueString = await AsyncStorage.getItem('@deviceSelected_API');
       const value = JSON.parse(valueString);
-      console.log(value)
-      
+      setSelectedDevice(value)      
     } catch (error) {
       console.log(error);
     }
   };
 
-  const storeData = async (item) => {
+  const storeSelectedDevice = async (item) => {
     try {
       await AsyncStorage.setItem('@deviceSelected_API', JSON.stringify(item));
       Alert.alert("Sucesso", "Dispositivo selectionado com sucesso")
@@ -181,6 +189,20 @@ export function Devices( {navigation} ) {
     }
   };
 
+  const storeDeviceList = async (item) => {
+    try {
+      await AsyncStorage.setItem('@deviceList_API', JSON.stringify(item));
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const handleDeviceListNotFound = () => {
+    Alert.alert("Nenhum dispositivo não encontrado", `Por favor, cadastre novo dispositivo`);
+    navigation.navigate('SetNewDevice');
+    // setTimeout(() => {navigation.navigate('SetNewDevice')}, 2000);      
+  }
+
   
   const showDeviceList = (
     devicesList.map((s,i) => 
@@ -188,9 +210,31 @@ export function Devices( {navigation} ) {
   )
 
   const handleSelectDevice = (itemValue, itemIndex) =>{
+    // console.log(itemValue.selectedWaterTank.marca)
     setSelectedDevice(itemValue);
-    storeData(itemValue);
+    storeSelectedDevice(itemValue);
   }
+
+  const handleDelDevice = () =>{
+    let newdeviceList = devicesList.filter((device)=> { return device.deviceName !== selectedDevice.deviceName})   
+
+    Alert.alert("Sucesso", `Voce removeu o dispositivo ${selectedDevice.deviceName}`)
+
+    setDevicesList(newdeviceList) 
+    storeDeviceList(newdeviceList);
+    retrieveDevicesList();
+
+  }
+
+  const [loaded] = useFonts({
+    nunitoLight: require("../assets/fonts/Nunito-Light.ttf"),
+    nunitoBold: require("../assets/fonts/Nunito-Bold.ttf")
+  });
+
+  if(!loaded){
+  return null  
+  }
+
 
   // React.useEffect(console.log("ASDASDASDASD"))
   return (
@@ -229,6 +273,7 @@ export function Devices( {navigation} ) {
                   onValueChange={handleSelectDevice}
                   mode={"dropdown"}
                 >
+                  <Picker.Item label="" value="" />              
                   {showDeviceList}                
                 </Picker>
                 </InputView>
@@ -238,7 +283,15 @@ export function Devices( {navigation} ) {
           <ButtonView>
             <TouchableOpacity 
               onPress={() => navigation.navigate('SetNewDevice')}>
-              <Image source={newDevice}></Image>                                   
+              <Image 
+                style={{ marginBottom: 20 }}
+                source={newDevice}></Image>  
+            </TouchableOpacity>
+            <TouchableOpacity 
+              onPress={handleDelDevice}>
+              <Image 
+                source={deleteDevice}></Image>                                   
+                                 
             </TouchableOpacity>
           </ButtonView>
 

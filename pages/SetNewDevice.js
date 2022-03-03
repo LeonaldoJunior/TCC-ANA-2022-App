@@ -1,7 +1,19 @@
 import { StatusBar } from 'expo-status-bar';
 import React, { useState, useEffect, children } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
-import { StyleSheet, Text, View, FlatList, TouchableOpacity, Image, Picker, TextInput, Alert, Keyboard } from 'react-native';
+import { 
+  StyleSheet, 
+  Text, 
+  View, 
+  FlatList, 
+  TouchableOpacity, 
+  Image, 
+  Picker, 
+  TextInput, 
+  Alert, 
+  Keyboard,
+  ActivityIndicator
+ } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import styled from 'styled-components';
 import Svg, { Path } from 'react-native-svg';
@@ -13,6 +25,7 @@ import Battery from '../assets/battery100.png'
 import backArrow from '../assets/backArrow.png'
 import manual from '../assets/manual.png'
 import save from '../assets/save.png'
+import saveDisabled from '../assets/saveDisabled.png'
 import GetCaixasDagua from '../services/GetCaixasDaguaApi'
 
 const Background = ({ children }) => {
@@ -124,6 +137,7 @@ export function SetNewDevice( {navigation} ) {
   const [deviceId ,setDeviceId] = useState("");
   const [deviceName ,setDeviceName] = useState("");
   const [listWaterTank ,setListWaterTank] = useState([]);
+  const [disableSave ,setDisableSave] = useState(true);
   
  
   useEffect(() => {
@@ -154,6 +168,17 @@ export function SetNewDevice( {navigation} ) {
     console.log(selectedWaterTank)
   }, [selectedWaterTank])
 
+  useEffect(() => {
+    if(deviceName.length > 0 && deviceId.length > 0 && selectedWaterTank){
+      setDisableSave(false);
+    }
+    else{
+      setDisableSave(true);
+
+    }
+    }, [deviceName, deviceId, selectedWaterTank])
+
+
 
     const onChangeDeviceIdInput = (inputString) => {
         setDeviceId(inputString);   
@@ -166,13 +191,12 @@ export function SetNewDevice( {navigation} ) {
 
     const showWaterTankOptions = (
       listWaterTank.map((s,i) => 
-      {return <Picker.Item key={i} value={s.caixaId} label={`${s.marca}: ${s.capacidade} L`}/>})
+      {return <Picker.Item key={i} value={s} label={`${s.marca}: ${s.capacidade} L`}/>})
     )
 
 
 
     const saveDevice = async () =>{
-
       try{
         const oldDevices = await AsyncStorage.getItem('@deviceList_API')
 
@@ -206,7 +230,9 @@ export function SetNewDevice( {navigation} ) {
   // React.useEffect(console.log("ASDASDASDASD"))
   return (
       <Background>
+        
         <View style={styles.container}>
+
           <TopBar>
             <ArrowIcon>
                 <TouchableOpacity
@@ -229,7 +255,6 @@ export function SetNewDevice( {navigation} ) {
               </TouchableOpacity>
             </BatIcon>
           </TopBar>
-
           <InputView>
             <LabelText>ID do dispositivo</LabelText>
             <TextInput
@@ -252,7 +277,7 @@ export function SetNewDevice( {navigation} ) {
           </InputView>
 
               {listWaterTank.length > 0 
-              && (
+              ? (
                 <InputView>              
                 <LabelText>Selecione a caixa d'água</LabelText>
                 <Picker
@@ -261,10 +286,14 @@ export function SetNewDevice( {navigation} ) {
                   onValueChange={(itemValue, itemIndex) => setSelectedWaterTank(itemValue)}
                   mode={"dropdown"}
                 >
+                  <Picker.Item label="" value="" />              
                   {showWaterTankOptions}                
                 </Picker>
                 </InputView>
-              )}
+              )
+            :(
+              <ActivityIndicator size="large" color="#0000ff"></ActivityIndicator>
+            )}
 
 
           <ButtonView>
@@ -274,12 +303,24 @@ export function SetNewDevice( {navigation} ) {
             </TouchableOpacity>
           </ButtonView>
 
-          <ButtonView>
-            <TouchableOpacity 
-              onPress={saveDevice}>
-              <Image source={save}></Image>                                   
-            </TouchableOpacity>
-          </ButtonView>
+
+          {!disableSave 
+          ? (
+            <ButtonView>
+              <TouchableOpacity 
+                onPress={saveDevice}
+              >
+                <Image source={save}></Image>                                   
+              </TouchableOpacity>
+            </ButtonView>
+          ):(
+            <ButtonView>
+              <Image source={saveDisabled}></Image>                                   
+            </ButtonView>
+          )}
+
+
+
 
           <StatusBar style="auto" />
         </View>

@@ -1,7 +1,7 @@
 import { StatusBar } from 'expo-status-bar';
 import React, { Children, useEffect, useState } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Text, View, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import { Text, View, StyleSheet, Image, TouchableOpacity, Alert } from 'react-native';
 import styled from 'styled-components';
 import Svg, { Path } from 'react-native-svg';
 import backArrow from '../assets/backArrow.png'
@@ -57,7 +57,7 @@ const AnaIcon = styled.View`
 `;
 
 const LevelText = styled.Text`    
-    font-family: 'nunitoLight';
+    font-family: nunitoBold;
     font-style: normal;
     font-weight: 600;
     font-size: 24px;
@@ -83,11 +83,18 @@ const Buttons = styled.View`
 
 
 export function MyLevelPage( {navigation} ){
+
     const [isLoading, setIsLoading] = useState(false);
     const [endDeviceDataResponse, setEndDeviceDataResponse] = useState(undefined);
     const [levelImage, setLevelImage] = useState(require("../assets/waterTank0.png"));
-    const [data, setData] = useState({});
+    const [endDeviceData, setEndDeviceData] = useState({});
+    const [selectedDevice ,setSelectedDevice] = useState({});
+    const [currentVolume ,setCurrentVolume] = useState(0);
+    const [maxVolume ,setMaxVolume] = useState(0);
 
+
+
+    
 
     
     const images = [
@@ -115,11 +122,100 @@ export function MyLevelPage( {navigation} ){
          {/* <Image source={require('../assets/waterTank100.png')}/> */}
     ]
 
+    useEffect(() => {
+        const unsubscribe = navigation.addListener('focus', () => {
+            retrieveDevicecSelected();
+        });
+        return unsubscribe;
+      }, [navigation]);
+
+    useEffect(() => {
+        // fluidRadiusCalculation();
+        retrieveDevicecSelected();
+    },[])
+
+    useEffect(() => {
+        setCurrentVolume(volumeCalculation());
+        setMaxVolume(maxVolumeCalculation());        
+    },[endDeviceData])
 
 
-    // useEffect(() =>{
+    useEffect(() => {
+        console.log("currentVolume");
+        console.log(currentVolume);
+    },[currentVolume])
 
+    useEffect(() => {
+        console.log("maxVolume");
+        console.log(maxVolume);
+    },[maxVolume])
 
+    
+    // useEffect(() => {
+    //     console.log("endDeviceData");
+    //     console.log(endDeviceData);
+    // },[endDeviceData])
+
+    
+
+    useEffect(()=>{
+        const interval = setInterval(() => {
+            const baseURL= "https://f115-138-204-26-247.ngrok.io/CaixaAgua/GetByIdMax/eui-70b3d57ed0046195";
+            console.log("baseURL")
+            console.log(baseURL)
+            fetch(baseURL)
+                .then(resp => resp.json())
+                .then(json => {
+                    // console.log("json")
+                    // console.log(json)
+                    let x =
+                    {
+                        "eventId": 32,
+                        "endDeviceId": "eui-70b3d57ed0046195",
+                        "applicationId": "leonaldo",
+                        "devEui": "70B3D57ED0046195",
+                        "devAddr": "260C04FD",
+                        "gatewayId": "gw-cwb-uberaba-1",
+                        "gatewayEui": "B827EBFFFF5C1DBF",
+                        "receivedAt": "2021-11-18T00:47:45.124291898Z",
+                        "fPort": 1,
+                        "fCnt": 0,
+                        "frmPayload": "AQIBjAICAys=",
+                        "analogIn1": 3.96,
+                        "analogIn2": 0.24
+                    }
+
+                    setEndDeviceData(x)
+                })  
+        }, 10000);
+        
+        
+        
+        // let x =
+        // {
+        //     "eventId": 32,
+        //     "endDeviceId": "eui-70b3d57ed0046195",
+        //     "applicationId": "leonaldo",
+        //     "devEui": "70B3D57ED0046195",
+        //     "devAddr": "260C04FD",
+        //     "gatewayId": "gw-cwb-uberaba-1",
+        //     "gatewayEui": "B827EBFFFF5C1DBF",
+        //     "receivedAt": "2021-11-18T00:47:45.124291898Z",
+        //     "fPort": 1,
+        //     "fCnt": 0,
+        //     "frmPayload": "AQIBjAICAys=",
+        //     "analogIn1": 3.96,
+        //     "analogIn2": 0.05
+        // }
+
+        // setEndDeviceData(x)
+
+        return () => clearInterval(interval);
+        
+
+    },[])
+
+  
     //     const interval = setInterval(() => {
 
     //         // const baseURL= 'https://e9ab-191-5-234-123.ngrok.io/webhook/GetByIdMax/eui-70b3d57ed0046195';
@@ -177,13 +273,154 @@ export function MyLevelPage( {navigation} ){
        
     // }, [])
 
+    // Calculo Do Volume
+    // fluidHeight = alturaCaixa - medicaoSensor
+    // [fórmula] alturaCaixa = endDeviceData.analogIn2
+    // [??] Discutir com a Fran o valor do analogIn2
+    // Tronco de cone:
+    // [fórmula] volume = (pi * fluidHeight)(baseRadius^2 + (baseRadius*fluidRadius) + fluidRadius^2)/3
+
+    // | fluidHeight        fluidRadius     1 |
+    // | 0                  baseRadius      1 |
+    // | waterTankHeight    topRadius       1 |
+
+    // DETERMINANTE
+    // | fluidHeight        fluidRadius     1 | fluidHeight         fluidRadius
+    // | 0                  baseRadius      1 | 0                   baseRadius
+    // | waterTankHeight    topRadius       1 | waterTankHeight     topRadius
+
+    // FÓRMULA (Equação da reta)
+    // [fórmula] fluidRadius = baseRadius - fluidHeight*(baseRadius - topRadius)/ waterTankHeight
+
+
+    const retrieveDevicecSelected = async () => {
+        try {
+          const valueString = await AsyncStorage.getItem('@deviceSelected_API');
+          const value = JSON.parse(valueString);
+
+          if(value.deviceId > 0){
+              console.log(value)
+            setSelectedDevice(value);      
+          }else{
+            handleDeviceNotSelected();
+          }
+
+          
+        } catch (error) {
+          console.log(error);
+        }
+    };
+
+    const handleDeviceNotSelected = () => {
+        Alert.alert("Dispositivo não foi selecionado", `Por favor, selecione um dispositivo`);
+        navigation.navigate('Devices');
+        // setTimeout(() => {navigation.navigate('SetNewDevice')}, 2000);      
+    }
+
+    const formatDate = (dateString) => {
+        let readDate = new Date(dateString)
+        var month   = readDate.getUTCMonth() + 1; //months from 1-12
+        var day     = readDate.getUTCDate();
+        var year    = readDate.getUTCFullYear();
+        
+        var seconds = readDate.getSeconds();
+        var minutes = readDate.getMinutes();
+        var hour = readDate.getHours();
+
+        return `${('0' + day).slice(-2)}/${('0' + month).slice(-2)}/${year} ${('0' + hour).slice(-2)}:${('0' + minutes).slice(-2)}:${('0' + seconds).slice(-2)}`;
+    } 
+    
+    const fluidRadiusCalculation = () => {
+        // console.log("selectedDevice")
+        // console.log(selectedDevice)
+        
+        if(selectedDevice.deviceId){
+
+            let baseRadius          = selectedDevice.selectedWaterTank.raioBase;
+            let fluidHeight         = fluidHeightCalculation();
+            let topRadius           = selectedDevice.selectedWaterTank.raioTopo;
+            let waterTankHeight     = selectedDevice.selectedWaterTank.altura;
+                            
+            return (baseRadius - ((fluidHeight*(baseRadius - topRadius)))/(waterTankHeight))
+            // let baseRadius      = 0.0540
+            // let fluidHeight     = 0.0525;
+            // let topRadius       = 0.0685;
+            // let waterTankHeight = 0.1050;
+
+            // let teste = baseRadius - ((fluidHeight*(baseRadius - topRadius)))/waterTankHeight
+    
+            // [fórmula] fluidRadius = baseRadius - fluidHeight*(baseRadius - topRadius)/ waterTankHeight
+            // return baseRadius - ((fluidHeight*(baseRadius - topRadius)))/waterTankHeight
+            // volumeCalculation();
+        }
+        return 0;
+    }
+
+    const fluidHeightCalculation = () => {
+        if(selectedDevice.deviceId){
+            if(endDeviceData.analogIn2){
+                return (selectedDevice.selectedWaterTank.altura - endDeviceData.analogIn2);      
+            }
+        }
+        return 0;
+    }
+
+    const maxVolumeCalculation = () =>{
+        if(selectedDevice.deviceId){
+            let baseRadius = selectedDevice.selectedWaterTank.raioBase;
+            let height = selectedDevice.selectedWaterTank.altura;
+            let topRadius = selectedDevice.selectedWaterTank.raioTopo;
+            
+            return (Math.PI * height)*(Math.pow(baseRadius,2) + (baseRadius*topRadius) + Math.pow(topRadius,2))/3
+        }
+
+        return 0;
+
+    }
+    const volumeCalculation = () => {
+          
+        let fluidHeight     = fluidHeightCalculation();
+        let fluidRadius     = fluidRadiusCalculation();
+                
+        if(fluidHeight !== 0 && fluidRadius !== 0 && selectedDevice.deviceId){
+            let baseRadius = selectedDevice.selectedWaterTank.raioBase;
+
+
+            return (Math.PI * fluidHeight)*(Math.pow(baseRadius,2) + (baseRadius*fluidRadius) + Math.pow(fluidRadius,2))/3
+        }
+        
+        return 0;
+        
+        
+        // [fórmula] volume = (pi * fluidHeight)(baseRadius^2 + (baseRadius*fluidRadius) + fluidRadius^2)/3
+        // let baseRadius      = 0.0540
+        // let fluidHeight     = 0.0525;
+        // let fluidRadius     = 0.06125;
+
+        // let volume = (Math.PI * fluidHeight)*(Math.pow(baseRadius,2) + (baseRadius*fluidRadius) + Math.pow(fluidRadius,2))/3        
+    }
+
+    //     Object {
+    //   "deviceId": "3333",
+    //   "deviceName": "3333",
+    //   "selectedWaterTank": Object {
+    //     "altura": 0.58,
+    //     "caixaId": 5,
+    //     "capacidade": 500,
+    //     "marca": "FORTLEV",
+    //     "baseRadius": 0.95,
+    //     "topRadius": 1.22,
+    //   },
+
     const [loaded] = useFonts({
         nunitoLight: require("../assets/fonts/Nunito-Light.ttf"),
         nunitoBold: require("../assets/fonts/Nunito-Bold.ttf")
     });
+
     if(!loaded){
-      return null  
+    return null  
     }
+
 
     return(
         <Background>
@@ -214,11 +451,13 @@ export function MyLevelPage( {navigation} ){
             </TopBar>
 
                 <LevelText>
+                    {selectedDevice.deviceName}
+                    {"\n"}
                     Leitura atual
                     {"\n"}
-                    xx:xx
+                    {endDeviceData.analogIn2}%
                     {"\n"}
-                    xx/xx/xxxx
+                    {formatDate(endDeviceData.receivedAt)}
                 </LevelText>
             <WaterTank>
                 {/* jeito certo de carregar imagem */}

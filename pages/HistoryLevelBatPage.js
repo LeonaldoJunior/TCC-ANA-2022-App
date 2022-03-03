@@ -57,7 +57,13 @@ const ArrowIcon = styled.View`
 `;
 
 export function HistoryLevelBatPage( {navigation} ) {
-
+    const [loaded] = useFonts({
+      nunitoLight: require("../assets/fonts/Nunito-Light.ttf"),
+      nunitoBold: require("../assets/fonts/Nunito-Bold.ttf")
+    });
+    if(!loaded){
+      return null  
+    }
     const [ columns, setColumns ] = useState([
         "Bateria(%)",
         "Hora",
@@ -223,14 +229,6 @@ export function HistoryLevelBatPage( {navigation} ) {
           }
         </View>
       )
-
-  const [loaded] = useFonts({
-    nunitoLight: require("../assets/fonts/Nunito-Light.ttf"),
-    nunitoBold: require("../assets/fonts/Nunito-Bold.ttf")
-  });
-  if(!loaded){
-    return null  
-  }
 
   return (
       <Background>
