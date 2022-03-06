@@ -160,7 +160,7 @@ export function Devices( {navigation} ) {
     try {
       const valueString = await AsyncStorage.getItem('@deviceList_API');
       const value = JSON.parse(valueString);
-      if(value.length > 0){
+      if(value !== null){
         setDevicesList(value);
       }else{
         handleDeviceListNotFound();
