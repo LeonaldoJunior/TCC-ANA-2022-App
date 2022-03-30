@@ -56,6 +56,30 @@ const ArrowIcon = styled.View`
 `;
 
 export function HistoryLevelPage( {navigation} ) {
+  const [selectedDevice ,setSelectedDevice] = useState({});
+  const [endDeviceData, setEndDeviceData] = useState({});
+
+  useEffect(()=>{
+    const interval = setInterval(() => {
+        const baseURL= "https://2833-2001-1284-f016-a1b0-2ca1-bbb7-1c46-9a84.ngrok.io/WebHook?id=eui-70b3d57ed0046195";
+
+        
+        console.log("call API")
+        fetch(baseURL)
+            .then(resp => resp.json())
+            .then(json => {
+                console.log("json")
+                console.log(json)
+                setEndDeviceData(json)
+            })  
+    }, 10000);
+    return () => clearInterval(interval);
+  },[])
+
+  useEffect(()=>{
+    console.log(endDeviceData)
+  },[endDeviceData])
+
 
     const [ columns, setColumns ] = useState([
         "Nível(%)",
@@ -64,115 +88,87 @@ export function HistoryLevelPage( {navigation} ) {
       ])
       const [ direction, setDirection ] = useState(null)
       const [ selectedColumn, setSelectedColumn ] = useState(null)
-      const [ logs, setlogs ] = useState([
-        {
-            Nivel: "70%",
-            Hora: "04:00",
-            Data: "04/09/2021",
-        },
-        {
-            Nivel: "70%",
-            Hora: "04:00",
-            Data: "04/09/2021",
-        },
-        {
-            Nivel: "70%",
-            Hora: "04:00",
-            Data: "04/09/2021",
-        },
-        {
-            Nivel: "70%",
-            Hora: "04:00",
-            Data: "04/09/2021",
-        },
-        {
-            Nivel: "70%",
-            Hora: "04:00",
-            Data: "04/09/2021",
-        },
-        {
-            Nivel: "70%",
-            Hora: "04:00",
-            Data: "04/09/2021",
-        },
-        {
-            Nivel: "70%",
-            Hora: "04:00",
-            Data: "04/09/2021",
-        },
-        {
-            Nivel: "70%",
-            Hora: "04:00",
-            Data: "04/09/2021",
-        },
-        {
-            Nivel: "70%",
-            Hora: "04:00",
-            Data: "04/09/2021",
-        },
-        {
-            Nivel: "70%",
-            Hora: "04:00",
-            Data: "04/09/2021",
-        },
+
+      // useEffect(() => {
+      //   const unsubscribe = navigation.addListener('focus', () => {
+      //       retrieveDevicecSelected();
+      //   });
+      //   return unsubscribe;
+      // }, [navigation]);
+
+      const formatDate = (date) =>{
+        let yyyy = date.substring(0,4);
+        let mm    = date.substring(5,7);
+        let dd    = date.substring(8,10);
+        return `${dd}\\${mm}\\${yyyy}`;
+      }
+
+      const formatHour = (date) =>{
+        return date.substring(11,19);
+      }
+
+      const maxVolume = (date) =>{
+        return date.substring(11,19);
+      }
+      const maxVolumeCalculation = () =>{
+        if(selectedDevice.deviceId){
+            let baseRadius = selectedDevice.selectedWaterTank.raioBase;
+            let height = selectedDevice.selectedWaterTank.altura;
+            let topRadius = selectedDevice.selectedWaterTank.raioTopo;
+            
+
+            
+            
+            let maxVolume = (Math.PI * height)*(Math.pow(baseRadius,2) + (baseRadius*topRadius) + Math.pow(topRadius,2))/3
+            
+            // console.log("baseRadius: ", baseRadius)
+            // console.log("height: ", height)
+            // console.log("topRadius: ", topRadius)
+            // console.log("maxVolume: ", maxVolume)
+            return maxVolume;
+            // return (Math.PI * height)*(Math.pow(baseRadius,2) + (baseRadius*topRadius) + Math.pow(topRadius,2))/3
+        }
+
+        return 0;
+
+    }
+
+    
+    const retrieveDevicecSelected = async () => {
+      try {
+        const valueString = await AsyncStorage.getItem('@deviceSelected_API');
+        const value = JSON.parse(valueString);
+
+      //   console.log("value value value")
+      //   console.log(value)
+
+        if(value !== null){
+          setSelectedDevice(value);      
+        }else{
+          handleDeviceNotSelected();
+        }
+
         
-        {
-            Nivel: "80%",
-            Hora: "03:00",
-            Data: "04/09/2021",
-        },
-        {
-            Nivel: "90%",
-            Hora: "02:00",
-            Data: "04/09/2021",
-        },
-        {
-            Nivel: "100%",
-            Hora: "01:00",
-            Data: "04/09/2021",
-        },
-        {
-          Nivel: "90%",
-          Hora: "02:00",
-          Data: "04/09/2021",
-        },
-        {
-          Nivel: "90%",
-          Hora: "02:00",
-          Data: "04/09/2021",
-        },
-        {
-          Nivel: "90%",
-          Hora: "02:00",
-          Data: "04/09/2021",
-        },
-        {
-          Nivel: "90%",
-          Hora: "02:00",
-          Data: "04/09/2021",
-        },
-        {
-          Nivel: "90%",
-          Hora: "02:00",
-          Data: "04/09/2021",
-        },
-        {
-          Nivel: "90%",
-          Hora: "02:00",
-          Data: "04/09/2021",
-        },
-        {
-          Nivel: "90%",
-          Hora: "02:00",
-          Data: "04/09/2021",
-        },
-      ])    
+      } catch (error) {
+        console.log(error);
+      }
+    };
+
+    const currentVolume = (date) =>{
+      return date.substring(11,19);
+    }
+
+      const relativeVolume = (date) =>{
+        return date.substring(11,19);
+      }
+
+
       const sortTable = (column) => {
         const newDirection = direction === "desc" ? "asc" : "desc" 
-        const sortedData = _.orderBy(logs, [column],[newDirection])
+        const sortedData = _.orderBy(endDeviceData, [column],[newDirection])
         setSelectedColumn(column)
         setDirection(newDirection)
-        setlogs(sortedData)
+        setEndDeviceData(sortedData)
       }
       const tableHeader = () => (
         <View style={styles.tableHeader}>
@@ -233,29 +229,31 @@ export function HistoryLevelPage( {navigation} ) {
               </TouchableOpacity>
             </BatIcon>
           </TopBar>
+          {endDeviceData.length > 0 &&(
+            <FlatList 
+              data={endDeviceData}
+              style={{top: 20, height: '80%', width:"90%"}}
+              keyExtractor={(item, index) => index+""}
+              ListHeaderComponent={tableHeader}
+              stickyHeaderIndices={[0]}
+              renderItem={({item, index})=> {
+              return (
+                  <View style={{...styles.tableRow, backgroundColor: index % 2 == 1 ? "white" : "white"}}>
+                      <View  style={styles.columnRowView}>
+                          <Text style={styles.columnRowTxt}>{item.analogIn1}</Text>   
+                      </View> 
+                      <View style={styles.columnRowView}>
+                          <Text style={styles.columnRowTxt}>{formatHour(item.receivedAt)}</Text>   
+                      </View> 
+                      <View style={styles.columnRowView}>
+                          <Text style={styles.columnRowTxt}>{formatDate(item.receivedAt)}</Text>   
+                      </View> 
+                  </View>
+              )
+              }}
+            />
 
-          <FlatList 
-            data={logs}
-            style={{top: 20, height: '80%', width:"90%"}}
-            keyExtractor={(item, index) => index+""}
-            ListHeaderComponent={tableHeader}
-            stickyHeaderIndices={[0]}
-            renderItem={({item, index})=> {
-            return (
-                <View style={{...styles.tableRow, backgroundColor: index % 2 == 1 ? "white" : "white"}}>
-                    <View  style={styles.columnRowView}>
-                        <Text style={styles.columnRowTxt}>{item.Nivel}</Text>   
-                    </View> 
-                    <View style={styles.columnRowView}>
-                        <Text style={styles.columnRowTxt}>{item.Data}</Text>   
-                    </View> 
-                    <View style={styles.columnRowView}>
-                        <Text style={styles.columnRowTxt}>{item.Hora}</Text>   
-                    </View> 
-                </View>
-            )
-            }}
-          />
+          )}
           <StatusBar style="auto" />
         </View>
       </Background>

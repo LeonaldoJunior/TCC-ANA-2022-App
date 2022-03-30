@@ -1,7 +1,7 @@
 import { StatusBar } from 'expo-status-bar';
 import React, { Children, useEffect, useState } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Text, View, StyleSheet, Image, TouchableOpacity, Alert } from 'react-native';
+import { Text, View, StyleSheet, Image, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import styled from 'styled-components';
 import Svg, { Path } from 'react-native-svg';
 import backArrow from '../assets/backArrow.png'
@@ -64,15 +64,21 @@ const LevelText = styled.Text`
     font-size: 24px;
     text-align: center;
     color: #FFFFFF;
-    margin-top: 20px
+    margin-top: 20px;
+    height: 150px;
+`;
 
+const ActivityIndicatorDiv = styled.View`
+    height: 150px;
+    margin-top: 30px;
 `;
 
 // Talvez abaixar mais a caixa dagua verificar depois
 const WaterTank = styled.View`
     justify-content: center;
     align-items: center; 
-    margin-top: 30px
+    margin-top: 30px;
+    height: 200px;
 
 `;
 
@@ -174,13 +180,13 @@ export function MyLevelPage( {navigation} ){
 
     useEffect(()=>{
         const interval = setInterval(() => {
-            const baseURL= "https://b667-2001-1284-f016-e728-b1f2-b818-7215-a707.ngrok.io/WebHook/GetByIdMax/eui-70b3d57ed0046195";
+            const baseURL= "https://2833-2001-1284-f016-a1b0-2ca1-bbb7-1c46-9a84.ngrok.io/WebHook/GetByIdMax/eui-70b3d57ed0046195";
             console.log("call API")
             fetch(baseURL)
                 .then(resp => resp.json())
                 .then(json => {
-                    // console.log("json")
-                    // console.log(json)
+                    console.log("json")
+                    console.log(json)
                     let x =
                     {
                         "eventId": 32,
@@ -188,14 +194,14 @@ export function MyLevelPage( {navigation} ){
                         "applicationId": "leonaldo",
                         "devEui": "70B3D57ED0046195",
                         "devAddr": "260C04FD",
-                        "gatewayId": "gw-cwb-uberaba-1",
+                               "gatewayId": "gw-cwb-uberaba-1",
                         "gatewayEui": "B827EBFFFF5C1DBF",
                         "receivedAt": "2021-11-18T00:47:45.124291898Z",
                         "fPort": 1,
                         "fCnt": 0,
                         "frmPayload": "AQIBjAICAys=",
                         "analogIn1": 3.96,
-                        "analogIn2": 0.3
+                        "analogIn2": 0.001
                     }
 
                     setEndDeviceData(x)
@@ -320,9 +326,7 @@ export function MyLevelPage( {navigation} ){
             return maxVolume;
             // return (Math.PI * height)*(Math.pow(baseRadius,2) + (baseRadius*topRadius) + Math.pow(topRadius,2))/3
         }
-
         return 0;
-
     }
     const volumeCalculation = () => {
           
@@ -396,35 +400,42 @@ export function MyLevelPage( {navigation} ){
                 <TouchableOpacity
                     onPress={ () => navigation.navigate('HistoryLevelBatPage')}
                 >
-                    <Battery currentBatLevel={endDeviceData.analogIn1}></Battery>
+                    <Battery currentBatLevel={4}></Battery>
+                    {/* <Battery currentBatLevel={endDeviceData.analogIn1}></Battery> */}
                   {/* <Image source={Battery}></Image>                                    */}
                 </TouchableOpacity>
               </BatIcon>
             </TopBar>
 
-                <LevelText>
-                    {selectedDevice.deviceName}
-                    {"\n"}
-                    Leitura atual
-                    {"\n"}
-                    {(currentVolume*1000).toFixed(2)} L
-                    {"\n"}
-                    {formatDate(endDeviceData.receivedAt)}
-                </LevelText>
+
+            {currentVolume > 0 
+                ?(
+                    <LevelText>
+                        {selectedDevice.deviceName}
+                        {"\n"}
+                        Leitura atual
+                        {"\n"}
+                        {(currentVolume*1000).toFixed(2)} L
+                        {"\n"}
+                        {formatDate(endDeviceData.receivedAt)}
+                    </LevelText>
+                )
+                :(
+                    <ActivityIndicatorDiv>
+                        <ActivityIndicator size="large" color="#0000ff"></ActivityIndicator>
+                    </ActivityIndicatorDiv>
+                )
+            }
+
             <WaterTank>
-                {/* jeito certo de carregar imagem */}
-                {/* <Image source={images[1]}/> */}
-                <Image source={levelImage}/>
-                
-
-
-                {/* src={require(`${this.state.img_path}`)} */}
-
-                
-                {/* <Image source={require('../assets/waterTank95.png')}/> */}
-                {/* <Image source={require('../assets/waterTank90.png')}/> */}
-                {/* <Image source={require('../assets/waterTank85.png')}/> */}
-                
+                {currentVolume > 0 
+                    ?(
+                        <Image source={levelImage}/>                    
+                    )
+                    :(
+                        <ActivityIndicator size="large" color="#0000ff"></ActivityIndicator>
+                    )
+                }
             </WaterTank>
 
             <Buttons>
@@ -437,7 +448,7 @@ export function MyLevelPage( {navigation} ){
 
                 </TouchableOpacity>
                 <TouchableOpacity
-                    onPress={ () => navigation.navigate('HistoryLevelP  age')}>
+                    onPress={ () => navigation.navigate('HistoryLevelPage')}>
                     <Image source={require('../assets/historyButton.png')}/>
                 </TouchableOpacity>
 
