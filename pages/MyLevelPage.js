@@ -6,7 +6,6 @@ import styled from 'styled-components';
 import Svg, { Path } from 'react-native-svg';
 import backArrow from '../assets/backArrow.png'
 import anaIcon from '../assets/anaIcon.png'
-import GetCaixasDagua from '../services/GetCaixasDaguaApi'
 import { useFonts } from 'expo-font'
 import AsyncStorage  from '@react-native-async-storage/async-storage';
 
@@ -179,35 +178,35 @@ export function MyLevelPage( {navigation} ){
     
 
     useEffect(()=>{
-        const interval = setInterval(() => {
-            const baseURL= "https://2833-2001-1284-f016-a1b0-2ca1-bbb7-1c46-9a84.ngrok.io/WebHook/GetByIdMax/eui-70b3d57ed0046195";
-            console.log("call API")
-            fetch(baseURL)
-                .then(resp => resp.json())
-                .then(json => {
-                    console.log("json")
-                    console.log(json)
-                    let x =
-                    {
-                        "eventId": 32,
-                        "endDeviceId": "eui-70b3d57ed0046195",
-                        "applicationId": "leonaldo",
-                        "devEui": "70B3D57ED0046195",
-                        "devAddr": "260C04FD",
-                               "gatewayId": "gw-cwb-uberaba-1",
-                        "gatewayEui": "B827EBFFFF5C1DBF",
-                        "receivedAt": "2021-11-18T00:47:45.124291898Z",
-                        "fPort": 1,
-                        "fCnt": 0,
-                        "frmPayload": "AQIBjAICAys=",
-                        "analogIn1": 3.96,
-                        "analogIn2": 0.001
-                    }
+        // const interval = setInterval(() => {
+        //     const baseURL= "https://2833-2001-1284-f016-a1b0-2ca1-bbb7-1c46-9a84.ngrok.io/WebHook/GetByIdMax/eui-70b3d57ed0046195";
+        //     console.log("call API")
+        //     fetch(baseURL)
+        //         .then(resp => resp.json())
+        //         .then(json => {
+        //             console.log("json")
+        //             console.log(json)
+        //             let x =
+        //             {
+        //                 "eventId": 32,
+        //                 "endDeviceId": "eui-70b3d57ed0046195",
+        //                 "applicationId": "leonaldo",
+        //                 "devEui": "70B3D57ED0046195",
+        //                 "devAddr": "260C04FD",
+        //                        "gatewayId": "gw-cwb-uberaba-1",
+        //                 "gatewayEui": "B827EBFFFF5C1DBF",
+        //                 "receivedAt": "2021-11-18T00:47:45.124291898Z",
+        //                 "fPort": 1,
+        //                 "fCnt": 0,
+        //                 "frmPayload": "AQIBjAICAys=",
+        //                 "analogIn1": 3.96,
+        //                 "analogIn2": 0.001
+        //             }
 
-                    setEndDeviceData(x)
-                })  
-        }, 10000);
-        return () => clearInterval(interval);
+        //             setEndDeviceData(x)
+        //         })  
+        // }, 10000);
+        // return () => clearInterval(interval);
         
 
     },[])

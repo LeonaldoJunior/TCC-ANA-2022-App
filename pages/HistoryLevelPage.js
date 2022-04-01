@@ -60,20 +60,20 @@ export function HistoryLevelPage( {navigation} ) {
   const [endDeviceData, setEndDeviceData] = useState({});
 
   useEffect(()=>{
-    const interval = setInterval(() => {
-        const baseURL= "https://2833-2001-1284-f016-a1b0-2ca1-bbb7-1c46-9a84.ngrok.io/WebHook?id=eui-70b3d57ed0046195";
+    // const interval = setInterval(() => {
+    //     const baseURL= "https://2833-2001-1284-f016-a1b0-2ca1-bbb7-1c46-9a84.ngrok.io/WebHook?id=eui-70b3d57ed0046195";
 
         
-        console.log("call API")
-        fetch(baseURL)
-            .then(resp => resp.json())
-            .then(json => {
-                console.log("json")
-                console.log(json)
-                setEndDeviceData(json)
-            })  
-    }, 10000);
-    return () => clearInterval(interval);
+    //     console.log("call API")
+    //     fetch(baseURL)
+    //         .then(resp => resp.json())
+    //         .then(json => {
+    //             console.log("json")
+    //             console.log(json)
+    //             setEndDeviceData(json)
+    //         })  
+    // }, 10000);
+    // return () => clearInterval(interval);
   },[])
 
   useEffect(()=>{

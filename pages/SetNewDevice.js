@@ -26,7 +26,9 @@ import backArrow from '../assets/backArrow.png'
 import manual from '../assets/manual.png'
 import save from '../assets/save.png'
 import saveDisabled from '../assets/saveDisabled.png'
-import GetCaixasDagua from '../services/GetCaixasDaguaApi'
+
+import GetCaixasDagua from '../services/GetCaixasDagua'
+import PostNewDevice from '../services/PostNewDevice'
 
 const Background = ({ children }) => {
   return(
@@ -136,33 +138,70 @@ export function SetNewDevice( {navigation} ) {
   const [selectedWaterTank ,setSelectedWaterTank] = useState("");
   const [deviceId ,setDeviceId] = useState("");
   const [deviceName ,setDeviceName] = useState("");
-  const [listWaterTank ,setListWaterTank] = useState([]);
+
+  const [listWaterTankList ,setListWaterTankList] = useState([]);
+  const [listWaterTankLoading ,setListWaterTankLoading] = useState(true);
+  const [listWaterTankError ,setListWaterTankError] = useState({});
+
+  const [newDevice ,setnewDevice] = useState({});
+  const [newDeviceResponse ,setNewDeviceResponse] = useState({});
+  const [newDeviceLoading ,setNewDeviceLoading] = useState(true);
+  const [newDeviceError ,setNewDeviceError] = useState({});
+  
+  
   const [disableSave ,setDisableSave] = useState(true);
   
  
   useEffect(() => {
-    GetCaixasDagua().then((x)=>{
-      setListWaterTank(x)
-    });
- }, [])
+    handleGetCaixasDAgua();
+  }, [])
 
+  const handleGetCaixasDAgua = async () =>{
+    try{
+      setListWaterTankLoading(true);
+      
+      const [caixasDAgua] = await Promise.all([
+        GetCaixasDagua()
+      ]);
 
+      setListWaterTankList(caixasDAgua.data)
+    }
+    catch (err) {
+      Alert.alert("Error Message: ", err.message);
+      setListWaterTankError(err);
+    }
+    finally {
+      setListWaterTankLoading(false);
+    }
+  }
 
-//  useEffect(() => {
-//   console.log(listWaterTank)
-//   console.log(listWaterTank.length)
+  const handlePostNewDevice = async () =>{
+    try{
+      setNewDeviceLoading(true);
+      console.log("selectedWaterTank: ", selectedWaterTank)
+      let formData = new FormData();
 
-//   // listWaterTank.map( (s, i) => {
-//   //  console.log(s.capacidade)
+      formData.append("deviceName", deviceName);
+      formData.append("deviceId", deviceId);
+      formData.append("selectedWaterTank", JSON.stringify(selectedWaterTank));
+      
+      const [newDevice] = await Promise.all([
+        PostNewDevice(formData)
+      ]);
 
-//   // })
+      setNewDeviceResponse(newDevice.data)
 
-// }, [listWaterTank])
-
-//   useEffect(() => {
-//     setSelectedWaterTank(retrieveData());
-//   }, [])
-
+      Keyboard.dismiss()
+      Alert.alert("Sucesso", "Novo dispositivo salvo")
+    }
+    catch (err) {
+      Alert.alert("Error Message: ", err.message);
+      setNewDeviceError(err);
+    }
+    finally {
+      setNewDeviceLoading(false);
+    }
+  }
 
   useEffect(() => {
     console.log(selectedWaterTank)
@@ -190,42 +229,9 @@ export function SetNewDevice( {navigation} ) {
 
 
     const showWaterTankOptions = (
-      listWaterTank.map((s,i) => 
+      listWaterTankList.map((s,i) => 
       {return <Picker.Item key={i} value={s} label={`${s.marca}: ${s.capacidade} L`}/>})
     )
-
-
-
-    const saveDevice = async () =>{
-      try{
-        const oldDevices = await AsyncStorage.getItem('@deviceList_API')
-
-        let newDevices = JSON.parse(oldDevices);
-        if( !newDevices ){
-          newDevices = []
-        }
-
-
-        let deviceObj = {
-          deviceName: deviceName,
-          deviceId: deviceId,
-          selectedWaterTank: selectedWaterTank
-        }
-
-
-        newDevices.push(deviceObj)
-
-        await AsyncStorage.setItem('@deviceList_API', JSON.stringify(newDevices))     
-        
-        Keyboard.dismiss()
-        Alert.alert("Sucesso", "Novo dispositivo salvo")
-
-      }
-      catch (e){
-        console.log(e)
-        Alert.alert(e);
-      }
-    }
 
   // React.useEffect(console.log("ASDASDASDASD"))
   return (
@@ -276,24 +282,25 @@ export function SetNewDevice( {navigation} ) {
             />          
           </InputView>
 
-              {listWaterTank.length > 0 
+              {!listWaterTankLoading 
               ? (
-                <InputView>              
-                <LabelText>Selecione a caixa d'água</LabelText>
-                <Picker
-                  selectedValue={selectedWaterTank}
-                  style={{ height: 50, width: 150, border: 10 }}
-                  onValueChange={(itemValue, itemIndex) => setSelectedWaterTank(itemValue)}
-                  mode={"dropdown"}
-                >
-                  <Picker.Item label="" value="" />              
-                  {showWaterTankOptions}                
-                </Picker>
-                </InputView>
+                  <InputView>              
+                  <LabelText>Selecione a caixa d'água</LabelText>
+                  <Picker
+                    selectedValue={selectedWaterTank}
+                    style={{ height: 50, width: 150, border: 10 }}
+                    onValueChange={(itemValue, itemIndex) => setSelectedWaterTank(itemValue)}
+                    mode={"dropdown"}
+                  >
+                    <Picker.Item label="" value="" />              
+                    {showWaterTankOptions}                
+                  </Picker>
+                  </InputView>
               )
-            :(
-              <ActivityIndicator size="large" color="#0000ff"></ActivityIndicator>
-            )}
+              :(
+                <ActivityIndicator size="large" color="#0000ff"></ActivityIndicator>
+              )
+            }
 
 
           <ButtonView>
@@ -308,7 +315,7 @@ export function SetNewDevice( {navigation} ) {
           ? (
             <ButtonView>
               <TouchableOpacity 
-                onPress={saveDevice}
+                onPress={handlePostNewDevice}
               >
                 <Image source={save}></Image>                                   
               </TouchableOpacity>
