@@ -1,10 +1,10 @@
 import API, { httsStatus, getError } from './api';
 import InternalServerError  from './Errors/InternalServer';
 
-const PostNewDevice = async (formObject) => {
+const DelDeviceByDeviceId = async (endDeviceID) => {
     try{
         const api = await API();
-        return await api.post(`UserUi/NewUserDevice`, formObject);
+        return await api.delete(`UserUi/DelDeviceByDeviceId?id=${endDeviceID}`);
     }
     catch(err){
         if(err.response){
@@ -16,4 +16,4 @@ const PostNewDevice = async (formObject) => {
     }
 }
 
-export default PostNewDevice
+export default DelDeviceByDeviceId

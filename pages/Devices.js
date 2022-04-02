@@ -1,24 +1,27 @@
 import { StatusBar } from 'expo-status-bar';
 import React, { useState, useEffect, children } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
-import { StyleSheet, Text, View, FlatList, TouchableOpacity, Image, Picker, Alert } from 'react-native';
+import { StyleSheet, Text, View, FlatList, TouchableOpacity, Image, Picker, Alert, ActivityIndicator } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import styled from 'styled-components';
 import Svg, { Path } from 'react-native-svg';
 import _, { sortedLastIndex } from "lodash"
 import { useFonts } from 'expo-font'
-import AsyncStorage  from '@react-native-async-storage/async-storage';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import Battery from '../assets/battery100.png'
 import backArrow from '../assets/backArrow.png'
 import newDevice from '../assets/newDevice.png'
 import deleteDevice from '../assets/deleteDevice.png'
 
+import GetAllDevicesByUserId from '../services/GetAllDevicesByUserId'
+import DelDeviceByDeviceId from '../services/DelDeviceByDeviceId'
+
 
 const Background = ({ children }) => {
-  return(
+  return (
     <LinearGradient
-      colors={['#04A1FF','#8BD3FF','#FFFFFF']}
+      colors={['#04A1FF', '#8BD3FF', '#FFFFFF']}
       style={{
         flex: 1,
 
@@ -48,7 +51,7 @@ const InputView = styled.View`
   align-items: center;
 `;
 
-const ButtonView=  styled.View`
+const ButtonView = styled.View`
   top: 300px;
 `
 const LabelText = styled.Text`
@@ -78,67 +81,33 @@ const ArrowIcon = styled.View`
   top: 12px;
 `;
 
-// const storeKey = "Devices"
-
-// const storeSelectedDevice = async () => { 
-//   try {
-//     await AsyncStorage.setItem(storeKey, 'java');
-//     await AsyncStorage.setItem(storeKey, 'css');
-//     setflag(true);
-//   } catch (error) {
-//     // Error saving data
-//   }
-// }
-
-// const retrieveData = async () => {
-//   console.log("chamou retrieveData")
-
-//   try {
-//     const value = await AsyncStorage.getItem(storeKey);
-//     if (value !== null) {
-
-//       // We have data!!
-//       console.log(value);
-
-//       return value;
-//     }
-//    } catch (error) {
-//     console.log(error)
-//     return null;
-//      // Error retrieving data  
-//    }
-// }
-
-
-export function Devices( {navigation} ) {
-
-  const [selectedDevice ,setSelectedDevice] = useState({});
-  const [devicesList ,setDevicesList] = useState([]);
+export function Devices({ navigation }) {
   
- 
-//   useEffect(() => {
-//     storeSelectedDevice()
-//  }, [])
+  const [loggedUser, setLoggedUser] = useState("");
 
-//   useEffect(() => {
-//     setSelectedDevice(retrieveData());
-//   }, [])
+  const [selectedDevice, setSelectedDevice] = useState({});
 
+  const [devicesList, setDevicesList] = useState([]);
+  const [devicesListLoading, setDevicesListLoading] = useState(true);
+  const [devicesListError, setDevicesListError] = useState({});
 
-  // useEffect(() => {
-  //   console.log(devicesList)
-  // }, [devicesList])
+  const [deleteDeviceResponse, setDeleteDeviceResponse] = useState([]);
+  const [deleteDeviceResponseLoading, setDeleteDeviceLoading] = useState(true);
+  const [deleteDeviceResponseError, setDeleteDeviceError] = useState({});
 
-  // React.useEffect(storeSelectedDevice)
 
 
   useEffect(() => {
-    retrieveDevicesList();
+      retrieveLoggedUser();
   }, []);
 
   useEffect(() => {
+    handleGetAllDevicesByUserId();
+  }, [loggedUser]);
+
+  useEffect(() => {
     const unsubscribe = navigation.addListener('focus', () => {
-      retrieveDevicesList();
+      retrieveLoggedUser();
     });
     return unsubscribe;
   }, [navigation]);
@@ -146,38 +115,98 @@ export function Devices( {navigation} ) {
 
   useEffect(() => {
     retrieveDevicecSelected();
-  },[])
+  }, [])
 
+  const handleGetAllDevicesByUserId = async () => {
+    if(loggedUser){
+      try {
+        setDevicesListLoading(true);
+          const [devicesList] = await Promise.all([
+            GetAllDevicesByUserId(loggedUser)
+          ]);
+    
+          setDevicesList(devicesList.data)
 
-
-  // useEffect(() => {
-  //    devicesList.map((s,i) => console.log(s))
-
-  // }, [devicesList]);
-  
-
-  const retrieveDevicesList = async () => {
-    try {
-      const valueString = await AsyncStorage.getItem('@deviceList_API');
-      const value = JSON.parse(valueString);
-      if(value !== null){
-        setDevicesList(value);
-      }else{
-        handleDeviceListNotFound();
       }
+      catch (err) {
+        if(err.message === "Request failed with status code 404"){
+          handleDeviceListNotFound();
+        }else{
+          Alert.alert("Error Message: ", err.message);
+        }
+        setDevicesListError(err);
+      }
+      finally {
+        setDevicesListLoading(false);
+      }
+    }
+  };
+
+  const handleDelDevice = async () => {
+    console.log("selectedDevice: ", selectedDevice)
+    console.log("selectedDevice.endDeviceID: ", selectedDevice.endDeviceID)
+    if(selectedDevice.endDeviceID){
+      try {
+        setDeleteDeviceLoading(true);
+          const [deleteResponse] = await Promise.all([
+            DelDeviceByDeviceId(selectedDevice.endDeviceID)
+          ]);
+    
+          setDeleteDeviceResponse(deleteResponse.data)
+
+      }
+      catch (err) {
+          Alert.alert("Error Message: ", err.message);
+          setDeleteDeviceError(err);
+      }
+      finally {
+        setDeleteDeviceLoading(false);
+      }
+    }
+  }
+
+  const handleDeviceListNotFound = () => {
+    Alert.alert("Nenhum dispositivo não encontrado", `Por favor, cadastre novo dispositivo`);
+    navigation.navigate('SetNewDevice');
+    // setTimeout(() => {navigation.navigate('SetNewDevice')}, 2000);      
+  }
+
+  const handleSelectDevice = (itemValue, itemIndex) => {
+    setSelectedDevice(itemValue);
+    storeSelectedDevice(itemValue);
+  }
+
+  const retrieveLoggedUser = async () => {
+    try {
+      const valueString = await AsyncStorage.getItem('@loggedUserId');
+      const value = JSON.parse(valueString);
+
+      if (value !== null) {
+        setLoggedUser(value);
+      } else {
+        handleUserNotLogged();
+      }
+
+
     } catch (error) {
       console.log(error);
     }
   };
 
+  const handleUserNotLogged = () => {
+    Alert.alert("Usuario nao registrado", `Por favor insira o usuário ID`);
+    navigation.navigate('Login');
+    // setTimeout(() => {navigation.navigate('SetNewDevice')}, 2000);      
+  }
+
   const retrieveDevicecSelected = async () => {
-    try {
-      const valueString = await AsyncStorage.getItem('@deviceSelected_API');
-      const value = JSON.parse(valueString);
-      setSelectedDevice(value)      
-    } catch (error) {
-      console.log(error);
-    }
+    // try {
+    //   const valueString = await AsyncStorage.getItem('@deviceSelected_API');
+    //   const value = JSON.parse(valueString);
+    //   setSelectedDevice(value)
+    // } catch (error) {
+    //   console.log(error);
+    // }
   };
 
   const storeSelectedDevice = async (item) => {
@@ -189,83 +218,52 @@ export function Devices( {navigation} ) {
     }
   };
 
-  const storeDeviceList = async (item) => {
-    try {
-      await AsyncStorage.setItem('@deviceList_API', JSON.stringify(item));
-    } catch (error) {
-      console.log(error);
-    }
-  };
 
-  const handleDeviceListNotFound = () => {
-    Alert.alert("Nenhum dispositivo não encontrado", `Por favor, cadastre novo dispositivo`);
-    navigation.navigate('SetNewDevice');
-    // setTimeout(() => {navigation.navigate('SetNewDevice')}, 2000);      
-  }
 
-  
   const showDeviceList = (
-    devicesList.map((s,i) => 
-    {return <Picker.Item key={i} value={s} label={s.deviceName}/>})
+    devicesList.map((s, i) => { return <Picker.Item key={i} value={s} label={s.waterTankName} /> })
   )
-
-  const handleSelectDevice = (itemValue, itemIndex) =>{
-    // console.log(itemValue.selectedWaterTank.marca)
-    setSelectedDevice(itemValue);
-    storeSelectedDevice(itemValue);
-  }
-
-  const handleDelDevice = () =>{
-    let newdeviceList = devicesList.filter((device)=> { return device.deviceName !== selectedDevice.deviceName})   
-
-    Alert.alert("Sucesso", `Voce removeu o dispositivo ${selectedDevice.deviceName}`)
-
-    setDevicesList(newdeviceList) 
-    storeDeviceList(newdeviceList);
-    retrieveDevicesList();
-
-  }
 
   const [loaded] = useFonts({
     nunitoLight: require("../assets/fonts/Nunito-Light.ttf"),
     nunitoBold: require("../assets/fonts/Nunito-Bold.ttf")
   });
 
-  if(!loaded){
-  return null  
+  if (!loaded) {
+    return null
   }
 
 
   // React.useEffect(console.log("ASDASDASDASD"))
   return (
-      <Background>
-        <View style={styles.container}>
-          <TopBar>
-            <ArrowIcon>
-                <TouchableOpacity
-                    onPress={() => navigation.goBack()}
-                >
-                <Image source={backArrow}></Image>                                   
-                </TouchableOpacity>
-            </ArrowIcon>
-            <TopBarText>Dispositivos</TopBarText>
-              
-            <BatIcon 
-              style={{
-                transform: [
-                  { scale: .8  }
-                ]
-              }}
+    <Background>
+      <View style={styles.container}>
+        <TopBar>
+          <ArrowIcon>
+            <TouchableOpacity
+              onPress={() => navigation.goBack()}
             >
-              <TouchableOpacity onPress={() => navigation.navigate('HistoryLevelBatPage')}>
-                <Image source={Battery}></Image>                                   
-              </TouchableOpacity>
-            </BatIcon>
-          </TopBar>
-          <InputView>
-            {devicesList.length > 0 
-              && (
-                <InputView>              
+              <Image source={backArrow}></Image>
+            </TouchableOpacity>
+          </ArrowIcon>
+          <TopBarText>Dispositivos</TopBarText>
+
+          <BatIcon
+            style={{
+              transform: [
+                { scale: .8 }
+              ]
+            }}
+          >
+            <TouchableOpacity onPress={() => navigation.navigate('HistoryLevelBatPage')}>
+              <Image source={Battery}></Image>
+            </TouchableOpacity>
+          </BatIcon>
+        </TopBar>
+        <InputView>
+          {!devicesListLoading 
+          ?(
+              <InputView>
                 <LabelText>Selecione seu dispositivo</LabelText>
                 <Picker
                   selectedValue={selectedDevice}
@@ -273,31 +271,35 @@ export function Devices( {navigation} ) {
                   onValueChange={handleSelectDevice}
                   mode={"dropdown"}
                 >
-                  <Picker.Item label="" value="" />              
-                  {showDeviceList}                
+                  <Picker.Item label="" value="" />
+                  {showDeviceList}
                 </Picker>
-                </InputView>
-            )}
-          </InputView>
+              </InputView>
+          )
+          : (
+            <ActivityIndicator size="large" color="#0000ff"></ActivityIndicator>
+          )
+          }
+        </InputView>
 
-          <ButtonView>
-            <TouchableOpacity 
-              onPress={() => navigation.navigate('SetNewDevice')}>
-              <Image 
-                style={{ marginBottom: 20 }}
-                source={newDevice}></Image>  
-            </TouchableOpacity>
-            <TouchableOpacity 
-              onPress={handleDelDevice}>
-              <Image 
-                source={deleteDevice}></Image>                                   
-                                 
-            </TouchableOpacity>
-          </ButtonView>
+        <ButtonView>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('SetNewDevice')}>
+            <Image
+              style={{ marginBottom: 20 }}
+              source={newDevice}></Image>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={handleDelDevice}>
+            <Image
+              source={deleteDevice}></Image>
 
-          <StatusBar style="auto" />
-        </View>
-      </Background>
+          </TouchableOpacity>
+        </ButtonView>
+
+        <StatusBar style="auto" />
+      </View>
+    </Background>
   );
 }
 

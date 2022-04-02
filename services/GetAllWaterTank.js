@@ -1,10 +1,10 @@
 import API, { httsStatus, getError } from './api';
 import InternalServerError  from './Errors/InternalServer';
 
-const PostNewDevice = async (formObject) => {
+const GetAllWaterTank = async () => {
     try{
         const api = await API();
-        return await api.post(`UserUi/NewUserDevice`, formObject);
+        return await api.get(`UserUi/GetAllWaterTank`);
     }
     catch(err){
         if(err.response){
@@ -16,4 +16,4 @@ const PostNewDevice = async (formObject) => {
     }
 }
 
-export default PostNewDevice
+export default GetAllWaterTank

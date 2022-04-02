@@ -6,6 +6,7 @@ import { MyLevelPage } from './pages/MyLevelPage';
 import { HistoryLevelBatPage } from './pages/HistoryLevelBatPage'
 import { HistoryLevelPage } from './pages/HistoryLevelPage'
 import { Devices } from './pages/Devices'
+import { Login } from './pages/Login'
 import { SetNewDevice } from './pages/SetNewDevice'
 import { SetWatertankMeasures } from './pages/SetWatertankMeasures'
 import { NavigationContainer } from '@react-navigation/native';
@@ -31,6 +32,7 @@ export default function App() {
           <Stack.Screen name="HistoryLevelBatPage" component={HistoryLevelBatPage} />
           <Stack.Screen name="HistoryLevelPage" component={HistoryLevelPage} />
           <Stack.Screen name="Devices" component={Devices} />
+          <Stack.Screen name="Login" component={Login} />
           <Stack.Screen name="SetNewDevice" component={SetNewDevice} />
           <Stack.Screen name="SetWatertankMeasures" component={SetWatertankMeasures} />
           

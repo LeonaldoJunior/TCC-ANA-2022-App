@@ -95,6 +95,7 @@ export function MyLevelPage( {navigation} ){
     const [levelImage, setLevelImage] = useState(require("../assets/waterTank0.png"));
     const [endDeviceData, setEndDeviceData] = useState({});
     const [selectedDevice ,setSelectedDevice] = useState({});
+    const [loggedUser ,setLoggedUser] = useState("");
     const [currentVolume ,setCurrentVolume] = useState(0);
     const [maxVolume ,setMaxVolume] = useState(0);
 
@@ -131,50 +132,20 @@ export function MyLevelPage( {navigation} ){
 
     useEffect(() => {
         const unsubscribe = navigation.addListener('focus', () => {
-            retrieveDevicecSelected();
+            retrieveLoggedUser();
         });
         return unsubscribe;
       }, [navigation]);
 
     useEffect(() => {
-        // fluidRadiusCalculation();
-        retrieveDevicecSelected();
+        retrieveLoggedUser();
     },[])
 
     useEffect(() => {
-        setCurrentVolume(volumeCalculation());
-    },[endDeviceData])
-
-    useEffect(() => {
-        setMaxVolume(maxVolumeCalculation());        
-    },[selectedDevice])
-
-
-    useEffect(() => {
-        if(currentVolume >= 0 && maxVolume > 0){
-            let volumePercentage = currentVolume/maxVolume * 100
-            let roundedNumber = Math.floor(volumePercentage/5)*5
-            setLevelImage(images[roundedNumber])
+        if(loggedUser.length > 5){
+            retrieveDevicecSelected();
         }
-    },[endDeviceData, selectedDevice])
-
-
-    // useEffect(() => {
-    //     console.log("currentVolume");
-    //     console.log(currentVolume);
-    // },[currentVolume])
-
-    // useEffect(() => {
-    //     console.log("maxVolume");
-    //     console.log(maxVolume);
-    // },[maxVolume])
-
-    
-    // useEffect(() => {
-    //     console.log("endDeviceData");
-    //     console.log(endDeviceData);
-    // },[endDeviceData])
-
+    }, [loggedUser])
     
 
     useEffect(()=>{
@@ -213,26 +184,7 @@ export function MyLevelPage( {navigation} ){
 
     
   
-    // Calculo Do Volume
-    // fluidHeight = alturaCaixa - medicaoSensor
-    // [fórmula] alturaCaixa = endDeviceData.analogIn2
-    // [??] Discutir com a Fran o valor do analogIn2
-    // Tronco de cone:
-    // [fórmula] volume = (pi * fluidHeight)(baseRadius^2 + (baseRadius*fluidRadius) + fluidRadius^2)/3
-
-    // | fluidHeight        fluidRadius     1 |
-    // | 0                  baseRadius      1 |
-    // | waterTankHeight    topRadius       1 |
-
-    // DETERMINANTE
-    // | fluidHeight        fluidRadius     1 | fluidHeight         fluidRadius
-    // | 0                  baseRadius      1 | 0                   baseRadius
-    // | waterTankHeight    topRadius       1 | waterTankHeight     topRadius
-
-    // FÓRMULA (Equação da reta)
-    // [fórmula] fluidRadius = baseRadius - fluidHeight*(baseRadius - topRadius)/ waterTankHeight
-
-
+  
     const retrieveDevicecSelected = async () => {
         try {
           const valueString = await AsyncStorage.getItem('@deviceSelected_API');
@@ -253,6 +205,30 @@ export function MyLevelPage( {navigation} ){
         }
     };
 
+    const retrieveLoggedUser = async () => {
+        try {
+          const valueString = await AsyncStorage.getItem('@loggedUserId');
+          const value = JSON.parse(valueString);
+
+          if(value !== null){
+            setLoggedUser(value);
+            retrieveDevicecSelected();
+          }else{
+            handleUserNotLogged();
+          }
+
+          
+        } catch (error) {
+          console.log(error);
+        }
+    };
+
+    const handleUserNotLogged = () => {
+        Alert.alert("Usuario nao registrado", `Por favor insira o usuário ID`);
+        navigation.navigate('Login');
+        // setTimeout(() => {navigation.navigate('SetNewDevice')}, 2000);      
+    }
+
     const handleDeviceNotSelected = () => {
         Alert.alert("Dispositivo não foi selecionado", `Por favor, selecione um dispositivo`);
         navigation.navigate('Devices');
@@ -272,100 +248,7 @@ export function MyLevelPage( {navigation} ){
         return `${('0' + day).slice(-2)}/${('0' + month).slice(-2)}/${year} ${('0' + hour).slice(-2)}:${('0' + minutes).slice(-2)}:${('0' + seconds).slice(-2)}`;
     } 
     
-    const fluidRadiusCalculation = () => {
-        // console.log("selectedDevice")
-        // console.log(selectedDevice)
-        
-        if(selectedDevice.deviceId){
-
-            let baseRadius          = selectedDevice.selectedWaterTank.raioBase;
-            let fluidHeight         = fluidHeightCalculation();
-            let topRadius           = selectedDevice.selectedWaterTank.raioTopo;
-            let waterTankHeight     = selectedDevice.selectedWaterTank.altura;
-                            
-            return (baseRadius - ((fluidHeight*(baseRadius - topRadius)))/(waterTankHeight))
-            // let baseRadius      = 0.0540
-            // let fluidHeight     = 0.0525;
-            // let topRadius       = 0.0685;
-            // let waterTankHeight = 0.1050;
-
-            // let teste = baseRadius - ((fluidHeight*(baseRadius - topRadius)))/waterTankHeight
     
-            // [fórmula] fluidRadius = baseRadius - fluidHeight*(baseRadius - topRadius)/ waterTankHeight
-            // return baseRadius - ((fluidHeight*(baseRadius - topRadius)))/waterTankHeight
-            // volumeCalculation();
-        }
-        return 0;
-    }
-
-    const fluidHeightCalculation = () => {
-        if(selectedDevice.deviceId){
-            if(endDeviceData.analogIn2){
-                return (selectedDevice.selectedWaterTank.altura - endDeviceData.analogIn2);      
-            }
-        }
-        return 0;
-    }
-
-    const maxVolumeCalculation = () =>{
-        if(selectedDevice.deviceId){
-            let baseRadius = selectedDevice.selectedWaterTank.raioBase;
-            let height = selectedDevice.selectedWaterTank.altura;
-            let topRadius = selectedDevice.selectedWaterTank.raioTopo;
-            
-
-            
-            
-            let maxVolume = (Math.PI * height)*(Math.pow(baseRadius,2) + (baseRadius*topRadius) + Math.pow(topRadius,2))/3
-            
-            // console.log("baseRadius: ", baseRadius)
-            // console.log("height: ", height)
-            // console.log("topRadius: ", topRadius)
-            // console.log("maxVolume: ", maxVolume)
-            return maxVolume;
-            // return (Math.PI * height)*(Math.pow(baseRadius,2) + (baseRadius*topRadius) + Math.pow(topRadius,2))/3
-        }
-        return 0;
-    }
-    const volumeCalculation = () => {
-          
-        let fluidHeight     = fluidHeightCalculation();
-        let fluidRadius     = fluidRadiusCalculation();
-                
-        if(fluidHeight !== 0 && fluidRadius !== 0 && selectedDevice.deviceId){
-            let baseRadius = selectedDevice.selectedWaterTank.raioBase;
-
-
-            // console.log("fluidHeight: ", fluidHeight)
-            // console.log("fluidRadius: ", fluidRadius)
-            // console.log("baseRadius: ", baseRadius)
-
-            return (Math.PI * fluidHeight)*(Math.pow(baseRadius,2) + (baseRadius*fluidRadius) + Math.pow(fluidRadius,2))/3
-        }
-        
-        return 0;
-        
-        
-        // [fórmula] volume = (pi * fluidHeight)(baseRadius^2 + (baseRadius*fluidRadius) + fluidRadius^2)/3
-        // let baseRadius      = 0.0540
-        // let fluidHeight     = 0.0525;
-        // let fluidRadius     = 0.06125;
-
-        // let volume = (Math.PI * fluidHeight)*(Math.pow(baseRadius,2) + (baseRadius*fluidRadius) + Math.pow(fluidRadius,2))/3        
-    }
-
-    //     Object {
-    //   "deviceId": "3333",
-    //   "deviceName": "3333",
-    //   "selectedWaterTank": Object {
-    //     "altura": 0.58,
-    //     "caixaId": 5,
-    //     "capacidade": 500,
-    //     "marca": "FORTLEV",
-    //     "baseRadius": 0.95,
-    //     "topRadius": 1.22,
-    //   },
-
     const [loaded] = useFonts({
         nunitoLight: require("../assets/fonts/Nunito-Light.ttf"),
         nunitoBold: require("../assets/fonts/Nunito-Bold.ttf")

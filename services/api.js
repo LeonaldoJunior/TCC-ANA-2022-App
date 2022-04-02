@@ -4,7 +4,7 @@ export default async function createAPI(){
     try{
         return axios.create({
             // baseURL: `https://tccana-backend.azurewebsites.net/`,
-            baseURL: `https://512e-2001-1284-f016-a1b0-d031-dc0-d087-8242.ngrok.io/api/`,
+            baseURL: `https://5b1a-2001-1284-f016-4ecb-e5da-f353-1ece-1b44.ngrok.io/api/`,
             headers: {
                 "Content-Type": "application/json"
             },
@@ -16,7 +16,7 @@ export default async function createAPI(){
 }
 
 export const getError = (err) => {
-    if(err && err.response && err.response.data && err.resposne.data.message){
+    if(err && err.response && err.response.data && err.response.data.message){
         return new Error(err.response.data.message);
     }
     return new Error(err.message)

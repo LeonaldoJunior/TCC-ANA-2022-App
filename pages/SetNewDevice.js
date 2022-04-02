@@ -1,25 +1,25 @@
 import { StatusBar } from 'expo-status-bar';
 import React, { useState, useEffect, children } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
-import { 
-  StyleSheet, 
-  Text, 
-  View, 
-  FlatList, 
-  TouchableOpacity, 
-  Image, 
-  Picker, 
-  TextInput, 
-  Alert, 
+import {
+  StyleSheet,
+  Text,
+  View,
+  FlatList,
+  TouchableOpacity,
+  Image,
+  Picker,
+  TextInput,
+  Alert,
   Keyboard,
   ActivityIndicator
- } from 'react-native';
+} from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import styled from 'styled-components';
 import Svg, { Path } from 'react-native-svg';
 import _, { sortedLastIndex } from "lodash"
 import { useFonts } from 'expo-font'
-import AsyncStorage  from '@react-native-async-storage/async-storage';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import Battery from '../assets/battery100.png'
 import backArrow from '../assets/backArrow.png'
@@ -27,13 +27,13 @@ import manual from '../assets/manual.png'
 import save from '../assets/save.png'
 import saveDisabled from '../assets/saveDisabled.png'
 
-import GetCaixasDagua from '../services/GetCaixasDagua'
+import GetAllWaterTank from '../services/GetAllWaterTank'
 import PostNewDevice from '../services/PostNewDevice'
 
 const Background = ({ children }) => {
-  return(
+  return (
     <LinearGradient
-      colors={['#04A1FF','#8BD3FF','#FFFFFF']}
+      colors={['#04A1FF', '#8BD3FF', '#FFFFFF']}
       style={{
         flex: 1,
 
@@ -63,7 +63,7 @@ const InputView = styled.View`
   align-items: center;
 `;
 
-const ButtonView=  styled.View`
+const ButtonView = styled.View`
   top: 30px;
   margin: 10px;
 `
@@ -95,76 +95,44 @@ const ArrowIcon = styled.View`
   top: 12px;
 `;
 
-// const storeKey = "Devices"
 
-// const storeData = async () => { 
-//   try {
-//     await AsyncStorage.setItem(storeKey, 'java');
-//     await AsyncStorage.setItem(storeKey, 'css');
-//     setflag(true);
-//   } catch (error) {
-//     // Error saving data
-//   }
-// }
-
-// const retrieveData = async () => {
-//   console.log("chamou retrieveData")
-
-//   try {
-//     const value = await AsyncStorage.getItem(storeKey);
-//     if (value !== null) {
-
-//       // We have data!!
-//       console.log(value);
-
-//       return value;
-//     }
-//    } catch (error) {
-//     console.log(error)
-//     return null;
-//      // Error retrieving data  
-//    }
-// }
+export function SetNewDevice({ navigation }) {
 
 
-
-export function SetNewDevice( {navigation} ) {
-
-  
   const [loaded] = useFonts({
     nunitoLight: require("../assets/fonts/Nunito-Light.ttf"),
     nunitoBold: require("../assets/fonts/Nunito-Bold.ttf")
   });
-  const [selectedWaterTank ,setSelectedWaterTank] = useState("");
-  const [deviceId ,setDeviceId] = useState("");
-  const [deviceName ,setDeviceName] = useState("");
+  const [selectedWaterTank, setSelectedWaterTank] = useState("");
+  const [deviceId, setDeviceId] = useState("");
+  const [waterTankName, setWaterTankName] = useState("");
 
-  const [listWaterTankList ,setListWaterTankList] = useState([]);
-  const [listWaterTankLoading ,setListWaterTankLoading] = useState(true);
-  const [listWaterTankError ,setListWaterTankError] = useState({});
+  const [listWaterTankList, setListWaterTankList] = useState([]);
+  const [listWaterTankLoading, setListWaterTankLoading] = useState(true);
+  const [listWaterTankError, setListWaterTankError] = useState({});
 
-  const [newDevice ,setnewDevice] = useState({});
-  const [newDeviceResponse ,setNewDeviceResponse] = useState({});
-  const [newDeviceLoading ,setNewDeviceLoading] = useState(true);
-  const [newDeviceError ,setNewDeviceError] = useState({});
-  
-  
-  const [disableSave ,setDisableSave] = useState(true);
-  
- 
+  const [newDeviceResponse, setNewDeviceResponse] = useState({});
+  const [newDeviceLoading, setNewDeviceLoading] = useState(true);
+  const [newDeviceError, setNewDeviceError] = useState({});
+
+  const [loggedUser, setLoggedUser] = useState("");
+  const [disableSave, setDisableSave] = useState(true);
+
+
   useEffect(() => {
-    handleGetCaixasDAgua();
+    retrieveLoggedUser();
+    handleGetAllWaterTank();
   }, [])
 
-  const handleGetCaixasDAgua = async () =>{
-    try{
+  const handleGetAllWaterTank = async () => {
+    try {
       setListWaterTankLoading(true);
-      
-      const [caixasDAgua] = await Promise.all([
-        GetCaixasDagua()
+
+      const [waterTank] = await Promise.all([
+        GetAllWaterTank()
       ]);
 
-      setListWaterTankList(caixasDAgua.data)
+      setListWaterTankList(waterTank.data)
     }
     catch (err) {
       Alert.alert("Error Message: ", err.message);
@@ -175,16 +143,20 @@ export function SetNewDevice( {navigation} ) {
     }
   }
 
-  const handlePostNewDevice = async () =>{
-    try{
+  const handlePostNewDevice = async () => {
+    try {
       setNewDeviceLoading(true);
       console.log("selectedWaterTank: ", selectedWaterTank)
       let formData = new FormData();
 
-      formData.append("deviceName", deviceName);
-      formData.append("deviceId", deviceId);
-      formData.append("selectedWaterTank", JSON.stringify(selectedWaterTank));
-      
+      console.log("POST selectedWaterTank: ", selectedWaterTank)
+      console.log("POST selectedWaterTank: ", selectedWaterTank.waterTankId)
+
+      formData.append("userId", loggedUser);
+      formData.append("endDeviceID", deviceId);
+      formData.append("waterTankId", selectedWaterTank.waterTankId );
+      formData.append("waterTankName", waterTankName);
+
       const [newDevice] = await Promise.all([
         PostNewDevice(formData)
       ]);
@@ -193,6 +165,11 @@ export function SetNewDevice( {navigation} ) {
 
       Keyboard.dismiss()
       Alert.alert("Sucesso", "Novo dispositivo salvo")
+
+      navigation.navigate('Devices');
+
+
+
     }
     catch (err) {
       Alert.alert("Error Message: ", err.message);
@@ -208,130 +185,151 @@ export function SetNewDevice( {navigation} ) {
   }, [selectedWaterTank])
 
   useEffect(() => {
-    if(deviceName.length > 0 && deviceId.length > 0 && selectedWaterTank){
+    if (waterTankName.length > 0 && deviceId.length > 0 && selectedWaterTank) {
       setDisableSave(false);
     }
-    else{
+    else {
       setDisableSave(true);
 
     }
-    }, [deviceName, deviceId, selectedWaterTank])
+  }, [waterTankName, deviceId, selectedWaterTank])
 
 
 
-    const onChangeDeviceIdInput = (inputString) => {
-        setDeviceId(inputString);   
+  const onChangeDeviceIdInput = (inputString) => {
+    setDeviceId(inputString);
+  }
+
+  const onChangeNameInput = (inputString) => {
+    setWaterTankName(inputString);
+  }
+
+  const retrieveLoggedUser = async () => {
+    try {
+      const valueString = await AsyncStorage.getItem('@loggedUserId');
+      const value = JSON.parse(valueString);
+
+      if (value !== null) {
+        setLoggedUser(value);
+      } else {
+        handleUserNotLogged();
+      }
+
+
+    } catch (error) {
+      console.log(error);
     }
+  };
 
-    const onChangeNameInput = (inputString) => {
-      setDeviceName(inputString);   
-    }
+  const handleUserNotLogged = () => {
+    Alert.alert("Usuario nao registrado", `Por favor insira o usuário ID`);
+    navigation.navigate('Login');
+    // setTimeout(() => {navigation.navigate('SetNewDevice')}, 2000);      
+  }
 
-
-    const showWaterTankOptions = (
-      listWaterTankList.map((s,i) => 
-      {return <Picker.Item key={i} value={s} label={`${s.marca}: ${s.capacidade} L`}/>})
-    )
+  const showWaterTankOptions = (
+    listWaterTankList.map((s, i) => { return <Picker.Item key={i} value={s} label={`${s.brand}: ${s.theoVolume} L`} /> })
+  )
 
   // React.useEffect(console.log("ASDASDASDASD"))
   return (
-      <Background>
-        
-        <View style={styles.container}>
+    <Background>
 
-          <TopBar>
-            <ArrowIcon>
-                <TouchableOpacity
-                    onPress={() => navigation.goBack()}
-                >
-                <Image source={backArrow}></Image>                                   
-                </TouchableOpacity>
-            </ArrowIcon>
-            <TopBarText>Novo Dispositivo</TopBarText>
-              
-            <BatIcon 
-              style={{
-                transform: [
-                  { scale: .8  }
-                ]
-              }}
+      <View style={styles.container}>
+
+        <TopBar>
+          <ArrowIcon>
+            <TouchableOpacity
+              onPress={() => navigation.goBack()}
             >
-              <TouchableOpacity onPress={() => navigation.navigate('HistoryLevelBatPage')}>
-                <Image source={Battery}></Image>                                   
-              </TouchableOpacity>
-            </BatIcon>
-          </TopBar>
-          <InputView>
-            <LabelText>ID do dispositivo</LabelText>
-            <TextInput
-                onChangeText={onChangeDeviceIdInput}
-                value={deviceId}
-                placeholder="id"
-                keyboardType="default"
-            />          
-          </InputView>
-
-          <InputView>
-            <LabelText>Nome do dispositivo </LabelText>
-            {/* style={styles.input} */}
-            <TextInput
-                onChangeText={onChangeNameInput}
-                value={deviceName}
-                placeholder="nome"
-                keyboardType="default"
-            />          
-          </InputView>
-
-              {!listWaterTankLoading 
-              ? (
-                  <InputView>              
-                  <LabelText>Selecione a caixa d'água</LabelText>
-                  <Picker
-                    selectedValue={selectedWaterTank}
-                    style={{ height: 50, width: 150, border: 10 }}
-                    onValueChange={(itemValue, itemIndex) => setSelectedWaterTank(itemValue)}
-                    mode={"dropdown"}
-                  >
-                    <Picker.Item label="" value="" />              
-                    {showWaterTankOptions}                
-                  </Picker>
-                  </InputView>
-              )
-              :(
-                <ActivityIndicator size="large" color="#0000ff"></ActivityIndicator>
-              )
-            }
-
-
-          <ButtonView>
-            <TouchableOpacity 
-              onPress={() => navigation.navigate('SetWatertankMeasures')}>
-              <Image source={manual}></Image>                                   
+              <Image source={backArrow}></Image>
             </TouchableOpacity>
-          </ButtonView>
+          </ArrowIcon>
+          <TopBarText>Novo Dispositivo</TopBarText>
+
+          <BatIcon
+            style={{
+              transform: [
+                { scale: .8 }
+              ]
+            }}
+          >
+            <TouchableOpacity onPress={() => navigation.navigate('HistoryLevelBatPage')}>
+              <Image source={Battery}></Image>
+            </TouchableOpacity>
+          </BatIcon>
+        </TopBar>
+        <InputView>
+          <LabelText>ID do dispositivo</LabelText>
+          <TextInput
+            onChangeText={onChangeDeviceIdInput}
+            value={deviceId}
+            placeholder="id"
+            keyboardType="default"
+          />
+        </InputView>
+
+        <InputView>
+          <LabelText>Nome do dispositivo </LabelText>
+          {/* style={styles.input} */}
+          <TextInput
+            onChangeText={onChangeNameInput}
+            value={waterTankName}
+            placeholder="nome"
+            keyboardType="default"
+          />
+        </InputView>
+
+        {!listWaterTankLoading
+          ? (
+            <InputView>
+              <LabelText>Selecione a caixa d'água</LabelText>
+              <Picker
+                selectedValue={selectedWaterTank}
+                style={{ height: 50, width: 150, border: 10 }}
+                onValueChange={(itemValue, itemIndex) => setSelectedWaterTank(itemValue)}
+                mode={"dropdown"}
+              >
+                <Picker.Item label="" value="" />
+                {showWaterTankOptions}
+              </Picker>
+            </InputView>
+          )
+          : (
+            <ActivityIndicator size="large" color="#0000ff"></ActivityIndicator>
+          )
+        }
 
 
-          {!disableSave 
+        <ButtonView>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('SetWatertankMeasures')}>
+            <Image source={manual}></Image>
+          </TouchableOpacity>
+        </ButtonView>
+
+
+        {!disableSave
           ? (
             <ButtonView>
-              <TouchableOpacity 
+              <TouchableOpacity
                 onPress={handlePostNewDevice}
               >
-                <Image source={save}></Image>                                   
+                <Image source={save}></Image>
               </TouchableOpacity>
             </ButtonView>
-          ):(
+          ) : (
             <ButtonView>
-              <Image source={saveDisabled}></Image>                                   
+              <Image source={saveDisabled}></Image>
             </ButtonView>
           )}
 
 
 
 
-          <StatusBar style="auto" />
-        </View>
-      </Background>
+        <StatusBar style="auto" />
+      </View>
+    </Background>
   );
 }
 
