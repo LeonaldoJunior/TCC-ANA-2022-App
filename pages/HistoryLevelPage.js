@@ -76,9 +76,9 @@ export function HistoryLevelPage( {navigation} ) {
     // return () => clearInterval(interval);
   },[])
 
-  useEffect(()=>{
-    console.log(endDeviceData)
-  },[endDeviceData])
+  // useEffect(()=>{
+  //   console.log(endDeviceData)
+  // },[endDeviceData])
 
 
     const [ columns, setColumns ] = useState([

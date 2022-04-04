@@ -1,7 +1,7 @@
 import { StatusBar } from 'expo-status-bar';
 import React, { useState, useEffect, children } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
-import { StyleSheet, Text, View, FlatList, TouchableOpacity, Image, Picker, Alert, ActivityIndicator } from 'react-native';
+import { StyleSheet, Text, View, FlatList, TouchableOpacity, Image, Picker, Alert, ActivityIndicator, TextInput,} from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import styled from 'styled-components';
 import Svg, { Path } from 'react-native-svg';
@@ -16,6 +16,7 @@ import deleteDevice from '../assets/deleteDevice.png'
 
 import GetAllDevicesByUserId from '../services/GetAllDevicesByUserId'
 import DelDeviceByDeviceId from '../services/DelDeviceByDeviceId'
+import PatchUsersAndDevicesById from '../services/PatchUsersAndDevicesById'
 
 
 const Background = ({ children }) => {
@@ -52,7 +53,7 @@ const InputView = styled.View`
 `;
 
 const ButtonView = styled.View`
-  top: 300px;
+  top: 200px;
 `
 const LabelText = styled.Text`
   font-style: normal;
@@ -85,17 +86,28 @@ export function Devices({ navigation }) {
   
   const [loggedUser, setLoggedUser] = useState("");
 
-  const [selectedDevice, setSelectedDevice] = useState({});
+
 
   const [devicesList, setDevicesList] = useState([]);
   const [devicesListLoading, setDevicesListLoading] = useState(true);
   const [devicesListError, setDevicesListError] = useState({});
+
+  const [selectedDevice, setSelectedDevice] = useState({});
+  const [selectedDeviceLoading, setSelectedDeviceLoading] = useState(true);
+  const [selectedDeviceError, setSelectedDeviceError] = useState({});
 
   const [deleteDeviceResponse, setDeleteDeviceResponse] = useState([]);
   const [deleteDeviceResponseLoading, setDeleteDeviceLoading] = useState(true);
   const [deleteDeviceResponseError, setDeleteDeviceError] = useState({});
 
 
+  
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      retrieveLoggedUser();
+    });
+    return unsubscribe;
+  }, [navigation]);
 
   useEffect(() => {
       retrieveLoggedUser();
@@ -106,16 +118,20 @@ export function Devices({ navigation }) {
   }, [loggedUser]);
 
   useEffect(() => {
-    const unsubscribe = navigation.addListener('focus', () => {
-      retrieveLoggedUser();
-    });
-    return unsubscribe;
-  }, [navigation]);
+    if(devicesList.length > 0){
+      handleSelectedDevice();
+    }
+  }, [devicesList]);
 
+  const handleSelectedDevice = () =>{
+    if(devicesList.length > 0){
+      let foundDeviceSelected = devicesList.find(device => device.isSelected == true);
+      if(foundDeviceSelected){
+        setSelectedDevice(foundDeviceSelected);
+      }
+    }
+  }
 
-  useEffect(() => {
-    retrieveDevicecSelected();
-  }, [])
 
   const handleGetAllDevicesByUserId = async () => {
     if(loggedUser){
@@ -143,17 +159,14 @@ export function Devices({ navigation }) {
   };
 
   const handleDelDevice = async () => {
-    console.log("selectedDevice: ", selectedDevice)
-    console.log("selectedDevice.endDeviceID: ", selectedDevice.endDeviceID)
     if(selectedDevice.endDeviceID){
       try {
         setDeleteDeviceLoading(true);
           const [deleteResponse] = await Promise.all([
             DelDeviceByDeviceId(selectedDevice.endDeviceID)
-          ]);
-    
+          ]);    
           setDeleteDeviceResponse(deleteResponse.data)
-
+          navigation.push('Devices');
       }
       catch (err) {
           Alert.alert("Error Message: ", err.message);
@@ -167,14 +180,35 @@ export function Devices({ navigation }) {
 
   const handleDeviceListNotFound = () => {
     Alert.alert("Nenhum dispositivo não encontrado", `Por favor, cadastre novo dispositivo`);
-    navigation.navigate('SetNewDevice');
+    navigation.push('SetNewDevice');
     // setTimeout(() => {navigation.navigate('SetNewDevice')}, 2000);      
   }
 
-  const handleSelectDevice = (itemValue, itemIndex) => {
-    setSelectedDevice(itemValue);
-    storeSelectedDevice(itemValue);
-  }
+  const handlePatchUsersAndDevicesById = async (itemValue, itemIndex) => {
+    if(loggedUser){
+      try {
+        setSelectedDeviceLoading(true);
+
+        let formData = new FormData();
+        formData.append("userId", loggedUser);
+        formData.append("usersAndDevicesId", itemValue.usersAndDevicesId);
+
+        const [selectedDeviceResp] = await Promise.all([
+          PatchUsersAndDevicesById(formData)
+        ]);
+        setSelectedDevice(selectedDeviceResp.data);
+        navigation.push('Devices');
+
+      }
+      catch (err) {
+        Alert.alert("Error Message: ", err.message);
+        setSelectedDeviceError(err);
+      }
+      finally {
+        setSelectedDeviceLoading(false);
+      }
+    }
+  };
 
   const retrieveLoggedUser = async () => {
     try {
@@ -195,30 +229,9 @@ export function Devices({ navigation }) {
 
   const handleUserNotLogged = () => {
     Alert.alert("Usuario nao registrado", `Por favor insira o usuário ID`);
-    navigation.navigate('Login');
+    navigation.push('Login');
     // setTimeout(() => {navigation.navigate('SetNewDevice')}, 2000);      
   }
-
-  const retrieveDevicecSelected = async () => {
-    // try {
-    //   const valueString = await AsyncStorage.getItem('@deviceSelected_API');
-    //   const value = JSON.parse(valueString);
-    //   setSelectedDevice(value)
-    // } catch (error) {
-    //   console.log(error);
-    // }
-  };
-
-  const storeSelectedDevice = async (item) => {
-    try {
-      await AsyncStorage.setItem('@deviceSelected_API', JSON.stringify(item));
-      Alert.alert("Sucesso", "Dispositivo selectionado com sucesso")
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-
 
   const showDeviceList = (
     devicesList.map((s, i) => { return <Picker.Item key={i} value={s} label={s.waterTankName} /> })
@@ -241,7 +254,7 @@ export function Devices({ navigation }) {
         <TopBar>
           <ArrowIcon>
             <TouchableOpacity
-              onPress={() => navigation.goBack()}
+              onPress={() => navigation.push('MyLevelPage')}
             >
               <Image source={backArrow}></Image>
             </TouchableOpacity>
@@ -255,7 +268,7 @@ export function Devices({ navigation }) {
               ]
             }}
           >
-            <TouchableOpacity onPress={() => navigation.navigate('HistoryLevelBatPage')}>
+            <TouchableOpacity onPress={() => navigation.push('HistoryLevelBatPage')}>
               <Image source={Battery}></Image>
             </TouchableOpacity>
           </BatIcon>
@@ -268,7 +281,7 @@ export function Devices({ navigation }) {
                 <Picker
                   selectedValue={selectedDevice}
                   style={{ height: 50, width: 150, border: 10 }}
-                  onValueChange={handleSelectDevice}
+                  onValueChange={handlePatchUsersAndDevicesById}
                   mode={"dropdown"}
                 >
                   <Picker.Item label="" value="" />
@@ -282,9 +295,21 @@ export function Devices({ navigation }) {
           }
         </InputView>
 
+        <InputView>
+          {selectedDevice  != {}
+          && (
+            <InputView>
+                <LabelText>Dispositivo selecionado: </LabelText>
+                <LabelText>{selectedDevice.waterTankName} </LabelText>
+            </InputView>
+
+          )
+          }
+        </InputView>
+
         <ButtonView>
           <TouchableOpacity
-            onPress={() => navigation.navigate('SetNewDevice')}>
+            onPress={() => navigation.push('SetNewDevice')}>
             <Image
               style={{ marginBottom: 20 }}
               source={newDevice}></Image>

@@ -20,10 +20,10 @@ const Battery = (props) =>{
     {/* <Image source={require('../../assets/waterTank100.png')}/> */}
     
     
-    useEffect(() => {
-        console.log("props.currentBatLevel");
-        console.log(props.currentBatLevel);
-    },[props.currentBatLevel])
+    // useEffect(() => {
+    //     console.log("props.currentBatLevel");
+    //     console.log(props.currentBatLevel);
+    // },[props.currentBatLevel])
     
     
     

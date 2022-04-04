@@ -9,6 +9,9 @@ import anaIcon from '../assets/anaIcon.png'
 import { useFonts } from 'expo-font'
 import AsyncStorage  from '@react-native-async-storage/async-storage';
 
+import GetSelectedDeviceByUserId from '../services/GetSelectedDeviceByUserId'
+import GetVolumeCalculationByUsersAndDevicesId from '../services/GetVolumeCalculationByUsersAndDevicesId'
+
 import Battery from './Components/Battery';
 
 const Background = ({ children }) => {
@@ -90,45 +93,41 @@ const Buttons = styled.View`
 
 export function MyLevelPage( {navigation} ){
 
-    const [isLoading, setIsLoading] = useState(false);
-    const [endDeviceDataResponse, setEndDeviceDataResponse] = useState(undefined);
     const [levelImage, setLevelImage] = useState(require("../assets/waterTank0.png"));
-    const [endDeviceData, setEndDeviceData] = useState({});
-    const [selectedDevice ,setSelectedDevice] = useState({});
     const [loggedUser ,setLoggedUser] = useState("");
-    const [currentVolume ,setCurrentVolume] = useState(0);
-    const [maxVolume ,setMaxVolume] = useState(0);
 
+    const [selectedDevice ,setSelectedDevice] = useState({});
+    const [selectedDeviceLoading, setSelectedDeviceLoading] = useState(true);
+    const [selectedDeviceError, setSelectedDeviceError] = useState({});
 
-
-    
+    const [currentVolumeAndBatteryLevel ,setCurrentVolumeAndBatteryLevel] = useState({});
+    const [currentVolumeAndBatteryLevelLoading, setCurrentVolumeAndBatteryLevelLoading] = useState(true);
+    const [currentVolumeAndBatteryLevelError, setCurrentVolumeAndBatteryLevelError] = useState({});
 
     
     const images = {
-      100:  require("../assets/waterTank100.png"),
-      95:  require("../assets/waterTank95.png"),
-      90:  require("../assets/waterTank90.png"),
-      85:  require("../assets/waterTank85.png"),
-      80:  require("../assets/waterTank80.png"),
-      75:  require("../assets/waterTank75.png"),
-      70:  require("../assets/waterTank70.png"),
-      65:  require("../assets/waterTank65.png"),
-      60:  require("../assets/waterTank60.png"),
-      55:  require("../assets/waterTank55.png"),
-      50:  require("../assets/waterTank50.png"),
-      45:  require("../assets/waterTank45.png"),
-      40:  require("../assets/waterTank40.png"),
-      35:  require("../assets/waterTank35.png"),
-      30:  require("../assets/waterTank30.png"),
-      25:  require("../assets/waterTank25.png"),
-      20:  require("../assets/waterTank20.png"),
-      15:  require("../assets/waterTank15.png"),
-      10:  require("../assets/waterTank10.png"),
-      5:  require("../assets/waterTank5.png"),
-      0:  require("../assets/waterTank0.png")
+        100:  require("../assets/waterTank100.png"),
+        95:  require("../assets/waterTank95.png"),
+        90:  require("../assets/waterTank90.png"),
+        85:  require("../assets/waterTank85.png"),
+        80:  require("../assets/waterTank80.png"),
+        75:  require("../assets/waterTank75.png"),
+        70:  require("../assets/waterTank70.png"),
+        65:  require("../assets/waterTank65.png"),
+        60:  require("../assets/waterTank60.png"),
+        55:  require("../assets/waterTank55.png"),
+        50:  require("../assets/waterTank50.png"),
+        45:  require("../assets/waterTank45.png"),
+        40:  require("../assets/waterTank40.png"),
+        35:  require("../assets/waterTank35.png"),
+        30:  require("../assets/waterTank30.png"),
+        25:  require("../assets/waterTank25.png"),
+        20:  require("../assets/waterTank20.png"),
+        15:  require("../assets/waterTank15.png"),
+        10:  require("../assets/waterTank10.png"),
+        5:  require("../assets/waterTank5.png"),
+        0:  require("../assets/waterTank0.png")
     }
-    {/* <Image source={require('../assets/waterTank100.png')}/> */}
-
 
     useEffect(() => {
         const unsubscribe = navigation.addListener('focus', () => {
@@ -142,69 +141,85 @@ export function MyLevelPage( {navigation} ){
     },[])
 
     useEffect(() => {
-        if(loggedUser.length > 5){
-            retrieveDevicecSelected();
+        if(loggedUser.length >= 5){
+            handleGetSelectedDeviceByUserId();
         }
     }, [loggedUser])
     
+    useEffect(() => {
+        if(selectedDevice != {}){
+            handleGetVolumeCalculationByUsersAndDevicesId();
+        }
+    }, [selectedDevice])
 
-    useEffect(()=>{
-        // const interval = setInterval(() => {
-        //     const baseURL= "https://2833-2001-1284-f016-a1b0-2ca1-bbb7-1c46-9a84.ngrok.io/WebHook/GetByIdMax/eui-70b3d57ed0046195";
-        //     console.log("call API")
-        //     fetch(baseURL)
-        //         .then(resp => resp.json())
-        //         .then(json => {
-        //             console.log("json")
-        //             console.log(json)
-        //             let x =
-        //             {
-        //                 "eventId": 32,
-        //                 "endDeviceId": "eui-70b3d57ed0046195",
-        //                 "applicationId": "leonaldo",
-        //                 "devEui": "70B3D57ED0046195",
-        //                 "devAddr": "260C04FD",
-        //                        "gatewayId": "gw-cwb-uberaba-1",
-        //                 "gatewayEui": "B827EBFFFF5C1DBF",
-        //                 "receivedAt": "2021-11-18T00:47:45.124291898Z",
-        //                 "fPort": 1,
-        //                 "fCnt": 0,
-        //                 "frmPayload": "AQIBjAICAys=",
-        //                 "analogIn1": 3.96,
-        //                 "analogIn2": 0.001
-        //             }
 
-        //             setEndDeviceData(x)
-        //         })  
-        // }, 10000);
-        // return () => clearInterval(interval);
-        
+    // TODO ATUALIZAR A IMAGEM
+    // useEffect(() => {
+    //     if(currentVolume >= 0 && maxVolume > 0){
+    //         let volumePercentage = currentVolume/maxVolume * 100
+    //         let roundedNumber = Math.floor(volumePercentage/5)*5
+    //         setLevelImage(images[roundedNumber])
+    //     }
+    // },[endDeviceData, selectedDevice])
 
-    },[])
+    const handleGetSelectedDeviceByUserId = async () => {
+        if(loggedUser){
+            console.log("Chamou handleGetSelectedDeviceByUserId, logged user: ", loggedUser)
 
+          try {
+            setSelectedDeviceLoading(true);
+              const [selectedDeviceResp] = await Promise.all([
+                GetSelectedDeviceByUserId(loggedUser)
+              ]);
+              setSelectedDevice(selectedDeviceResp.data)
     
-  
-  
-    const retrieveDevicecSelected = async () => {
-        try {
-          const valueString = await AsyncStorage.getItem('@deviceSelected_API');
-          const value = JSON.parse(valueString);
-
-        //   console.log("value value value")
-        //   console.log(value)
-
-          if(value !== null){
-            setSelectedDevice(value);      
-          }else{
-            handleDeviceNotSelected();
           }
-
-          
-        } catch (error) {
-          console.log(error);
+          catch (err) {
+            if(err.message === "Request failed with status code 404"){
+                handleDeviceNotSelected();
+            }else{
+              Alert.alert("Error Message: ", err.message);
+            }
+            setSelectedDeviceError(err);
+          }
+          finally {
+            setSelectedDeviceLoading(false);
+          }
         }
     };
 
+    const handleGetVolumeCalculationByUsersAndDevicesId = async () => {
+        console.log("Chamou handleGetVolumeCalculationByUsersAndDevicesId")
+
+        if(selectedDevice && selectedDevice.usersAndDevicesId){
+        console.log("Chamou handleGetVolumeCalculationByUsersAndDevicesId, e o selectedDevice: ", selectedDevice.usersAndDevicesId)
+            
+          try {
+            setCurrentVolumeAndBatteryLevelLoading(true);
+              const [calculationResp] = await Promise.all([
+                GetVolumeCalculationByUsersAndDevicesId(selectedDevice.usersAndDevicesId)
+              ]);
+              setCurrentVolumeAndBatteryLevelLoading(calculationResp.data)
+    
+          }
+          catch (err) {
+            if(err.message === "Request failed with status code 404"){
+                handleVolumeNotFound();
+            }else{
+              Alert.alert("Error Message: ", err.message);
+            }
+            setCurrentVolumeAndBatteryLevelError(err);
+          }
+          finally {
+            setCurrentVolumeAndBatteryLevelLoading(false);
+          }
+        }
+    };
+
+    const handleVolumeNotFound = () => {
+        Alert.alert("Error Message: ", "O dispositivo ainda nao realizou nenhuma leitura por favor aguarde (1h)");
+    }
+  
     const retrieveLoggedUser = async () => {
         try {
           const valueString = await AsyncStorage.getItem('@loggedUserId');
@@ -212,7 +227,6 @@ export function MyLevelPage( {navigation} ){
 
           if(value !== null){
             setLoggedUser(value);
-            retrieveDevicecSelected();
           }else{
             handleUserNotLogged();
           }
@@ -225,13 +239,13 @@ export function MyLevelPage( {navigation} ){
 
     const handleUserNotLogged = () => {
         Alert.alert("Usuario nao registrado", `Por favor insira o usuário ID`);
-        navigation.navigate('Login');
+        navigation.push('Login');
         // setTimeout(() => {navigation.navigate('SetNewDevice')}, 2000);      
     }
 
     const handleDeviceNotSelected = () => {
-        Alert.alert("Dispositivo não foi selecionado", `Por favor, selecione um dispositivo`);
-        navigation.navigate('Devices');
+        Alert.alert("Nenhum dispositivo selecionado", `Por favor, selecione um dispositivo`);
+        navigation.push('Devices');
         // setTimeout(() => {navigation.navigate('SetNewDevice')}, 2000);      
     }
 
@@ -247,8 +261,7 @@ export function MyLevelPage( {navigation} ){
 
         return `${('0' + day).slice(-2)}/${('0' + month).slice(-2)}/${year} ${('0' + hour).slice(-2)}:${('0' + minutes).slice(-2)}:${('0' + seconds).slice(-2)}`;
     } 
-    
-    
+        
     const [loaded] = useFonts({
         nunitoLight: require("../assets/fonts/Nunito-Light.ttf"),
         nunitoBold: require("../assets/fonts/Nunito-Bold.ttf")
@@ -257,22 +270,15 @@ export function MyLevelPage( {navigation} ){
     if(!loaded){
     return null  
     }
-
-
     return(
         <Background>
             {/* {isLoading ? <Loading /> : } */}
             <TopBar>
-              <AnaIcon          
-
-              >
-
+              <AnaIcon>
                   <Image source={anaIcon}></Image>                                   
-
               </AnaIcon>
               <TopBarText>Meu nível</TopBarText>
               
-
               <BatIcon 
                 style={{
                     transform: [
@@ -280,26 +286,25 @@ export function MyLevelPage( {navigation} ){
                 }}
               >
                 <TouchableOpacity
-                    onPress={ () => navigation.navigate('HistoryLevelBatPage')}
+                    onPress={ () => navigation.push('HistoryLevelBatPage')}
                 >
-                    <Battery currentBatLevel={4}></Battery>
-                    {/* <Battery currentBatLevel={endDeviceData.analogIn1}></Battery> */}
-                  {/* <Image source={Battery}></Image>                                    */}
+                <Battery currentBatLevel={currentVolumeAndBatteryLevel.currentBatteryLevel}></Battery>
+                {/* <Battery currentBatLevel={endDeviceData.analogIn1}></Battery> */}
                 </TouchableOpacity>
               </BatIcon>
             </TopBar>
 
 
-            {currentVolume > 0 
+            {currentVolumeAndBatteryLevel && currentVolumeAndBatteryLevel.currentVolume 
                 ?(
                     <LevelText>
-                        {selectedDevice.deviceName}
+                        {selectedDevice.waterTankName}
                         {"\n"}
                         Leitura atual
                         {"\n"}
-                        {(currentVolume*1000).toFixed(2)} L
+                        {(currentVolumeAndBatteryLevel.currentVolume*1000).toFixed(2)} L
                         {"\n"}
-                        {formatDate(endDeviceData.receivedAt)}
+                        {formatDate(currentVolumeAndBatteryLevel.receivedAt)}
                     </LevelText>
                 )
                 :(
@@ -310,7 +315,7 @@ export function MyLevelPage( {navigation} ){
             }
 
             <WaterTank>
-                {currentVolume > 0 
+                {currentVolumeAndBatteryLevel && currentVolumeAndBatteryLevel.currentVolume 
                     ?(
                         <Image source={levelImage}/>                    
                     )
@@ -323,14 +328,14 @@ export function MyLevelPage( {navigation} ){
             <Buttons>
 
                 <TouchableOpacity
-                    onPress={ () => navigation.navigate('Devices')}>
+                    onPress={ () => navigation.push('Devices')}>
                     <Image 
                         style={{ margin: 20 }}
                         source={require('../assets/devices.png')}/>
 
                 </TouchableOpacity>
                 <TouchableOpacity
-                    onPress={ () => navigation.navigate('HistoryLevelPage')}>
+                    onPress={ () => navigation.push('HistoryLevelPage')}>
                     <Image source={require('../assets/historyButton.png')}/>
                 </TouchableOpacity>
 

@@ -146,12 +146,7 @@ export function SetNewDevice({ navigation }) {
   const handlePostNewDevice = async () => {
     try {
       setNewDeviceLoading(true);
-      console.log("selectedWaterTank: ", selectedWaterTank)
       let formData = new FormData();
-
-      console.log("POST selectedWaterTank: ", selectedWaterTank)
-      console.log("POST selectedWaterTank: ", selectedWaterTank.waterTankId)
-
       formData.append("userId", loggedUser);
       formData.append("endDeviceID", deviceId);
       formData.append("waterTankId", selectedWaterTank.waterTankId );
@@ -166,13 +161,21 @@ export function SetNewDevice({ navigation }) {
       Keyboard.dismiss()
       Alert.alert("Sucesso", "Novo dispositivo salvo")
 
-      navigation.navigate('Devices');
+      navigation.push('Devices');
 
 
 
     }
     catch (err) {
-      Alert.alert("Error Message: ", err.message);
+      if(err.message === "Request failed with status code 400"){
+        Alert.alert("Error Message: ", "Dispositivo ID ja utilizado, por favor digite outro ID do dispositivo");
+      }
+      if(err.message === "Request failed with status code 404"){
+        Alert.alert("Error Message: ", "Dispositivo não encontrado, certifique-se que digitou corretamente o ID, tente novamente");
+      }
+      else{
+        Alert.alert("Error Message: ", err.message);
+      }
       setNewDeviceError(err);
     }
     finally {
@@ -180,9 +183,9 @@ export function SetNewDevice({ navigation }) {
     }
   }
 
-  useEffect(() => {
-    console.log(selectedWaterTank)
-  }, [selectedWaterTank])
+  // useEffect(() => {
+  //   console.log(selectedWaterTank)
+  // }, [selectedWaterTank])
 
   useEffect(() => {
     if (waterTankName.length > 0 && deviceId.length > 0 && selectedWaterTank) {
@@ -240,7 +243,7 @@ export function SetNewDevice({ navigation }) {
         <TopBar>
           <ArrowIcon>
             <TouchableOpacity
-              onPress={() => navigation.goBack()}
+              onPress={ () => navigation.push('Devices')}
             >
               <Image source={backArrow}></Image>
             </TouchableOpacity>
@@ -254,7 +257,7 @@ export function SetNewDevice({ navigation }) {
               ]
             }}
           >
-            <TouchableOpacity onPress={() => navigation.navigate('HistoryLevelBatPage')}>
+            <TouchableOpacity onPress={() => navigation.push('HistoryLevelBatPage')}>
               <Image source={Battery}></Image>
             </TouchableOpacity>
           </BatIcon>
@@ -303,7 +306,7 @@ export function SetNewDevice({ navigation }) {
 
         <ButtonView>
           <TouchableOpacity
-            onPress={() => navigation.navigate('SetWatertankMeasures')}>
+            onPress={() => navigation.push('SetWatertankMeasures')}>
             <Image source={manual}></Image>
           </TouchableOpacity>
         </ButtonView>
