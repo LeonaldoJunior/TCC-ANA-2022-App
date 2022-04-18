@@ -1,7 +1,7 @@
 import { StatusBar } from 'expo-status-bar';
 import React, { useState, useEffect, children } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
-import { StyleSheet, Text, View, FlatList, TouchableOpacity, Image } from 'react-native';
+import { StyleSheet, Text, View, FlatList, TouchableOpacity, Image, Alert, ActivityIndicator } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import styled from 'styled-components';
 import Svg, { Path } from 'react-native-svg';
@@ -9,6 +9,12 @@ import _ from "lodash"
 import Battery from '../assets/battery100.png'
 import backArrow from '../assets/backArrow.png'
 import { useFonts } from 'expo-font'
+import AsyncStorage  from '@react-native-async-storage/async-storage';
+
+import GetVolumeCalculationByUsersAndDevicesIdList from '../services/GetVolumeCalculationByUsersAndDevicesIdList'
+import GetSelectedDeviceByUserId from '../services/GetSelectedDeviceByUserId'
+
+
 
 const Background = ({ children }) => {
   return(
@@ -55,120 +61,217 @@ const ArrowIcon = styled.View`
   top: 12px;
 `;
 
+const ActivityIndicatorDiv = styled.View`
+    height: 150px;
+    margin-top: 30px;
+`;
+
+let interval;
+
+
 export function HistoryLevelPage( {navigation} ) {
+  const [loggedUser ,setLoggedUser] = useState("");
+  const [loggedUserLoading ,setLoggedUserLoading] = useState(true);
+  
+
+
   const [selectedDevice ,setSelectedDevice] = useState({});
-  const [endDeviceData, setEndDeviceData] = useState({});
+  const [selectedDeviceLoading, setSelectedDeviceLoading] = useState(true);
+  const [selectedDeviceError, setSelectedDeviceError] = useState({});
 
-  useEffect(()=>{
-    // const interval = setInterval(() => {
-    //     const baseURL= "https://2833-2001-1284-f016-a1b0-2ca1-bbb7-1c46-9a84.ngrok.io/WebHook?id=eui-70b3d57ed0046195";
+  const [currentVolumeAndBatteryLevel ,setCurrentVolumeAndBatteryLevel] = useState({});
+  const [currentVolumeAndBatteryLevelLoading, setCurrentVolumeAndBatteryLevelLoading] = useState(true);
+  const [currentVolumeAndBatteryLevelError, setCurrentVolumeAndBatteryLevelError] = useState({});
 
-        
-    //     console.log("call API")
-    //     fetch(baseURL)
-    //         .then(resp => resp.json())
-    //         .then(json => {
-    //             console.log("json")
-    //             console.log(json)
-    //             setEndDeviceData(json)
-    //         })  
-    // }, 10000);
-    // return () => clearInterval(interval);
+  const [logs, setLogs] = useState({});
+  
+
+  const MINUTE_MS = 60000;
+
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+        retrieveLoggedUser();
+    });
+    return unsubscribe;
+  }, [navigation]);
+
+  useEffect(() => {
+      retrieveLoggedUser();
   },[])
 
+
+  useEffect(() => {
+    if(!loggedUserLoading){
+        handleGetSelectedDeviceByUserId();
+    }
+  }, [loggedUser, loggedUserLoading])
+
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if(!selectedDeviceLoading){
+        handleGetVolumeCalculationByUsersAndDevicesIdList();
+      }
+      else
+      { 
+          console.log ("selectedDevice != {},    device not selected")
+      }
+    }, MINUTE_MS*10);
+  
+    return () => clearInterval(interval); // This represents the unmount function, in which you need to clear your interval to prevent memory leaks.
+  }, [])
+
+  useEffect(() => {
+    console.log("Sem internal")
+    if(!selectedDeviceLoading){
+      handleGetVolumeCalculationByUsersAndDevicesIdList();
+    } 
+  }, [selectedDevice, selectedDeviceLoading])
+
   // useEffect(()=>{
-  //   console.log(endDeviceData)
-  // },[endDeviceData])
+  //   console.log("currentVolumeAndBatteryLevel")
+  //   console.log(currentVolumeAndBatteryLevel)
+  // },[currentVolumeAndBatteryLevel])
+
+  // useEffect(()=>{
+  //   console.log("logs")
+  //   console.log(logs)
+  // },[logs])
+
+
+  useEffect(()=>{
+    // const [logs, setLogs] = useState({});
+    if(!currentVolumeAndBatteryLevelLoading){
+      setLogs(
+        currentVolumeAndBatteryLevel.map((elm)=>{
+          return {
+          "VolumePercentage" : calcVolumePercentage(elm),
+          "VolumeLiters": elm.volumeCalc.currentVolume*1000,
+          "Date": formatDate(elm.eventsEndDevice.receivedAt),
+          "Hour": formatHour(elm.eventsEndDevice.receivedAt)
+          }
+        })
+      )
+    }
+
+  },[currentVolumeAndBatteryLevel, currentVolumeAndBatteryLevelLoading])
+  
+  const handleGetSelectedDeviceByUserId = async () => {
+        
+    setSelectedDeviceLoading(true);
+    try {
+    const [selectedDeviceResp] = await Promise.all([
+        GetSelectedDeviceByUserId(loggedUser)
+    ]);
+    setSelectedDevice(selectedDeviceResp.data)
+        
+    }
+    catch (err) {
+    if(err.message === "Request failed with status code 404"){
+        handleDeviceNotSelected();
+    }else{
+        Alert.alert("Error Message: ", err.message);
+    }
+    setSelectedDeviceError(err);
+    }
+    finally {
+    setSelectedDeviceLoading(false);
+    }
+    
+  };
+
+  const retrieveLoggedUser = async () => {
+    setLoggedUserLoading(true)
+
+    try {
+      const valueString = await AsyncStorage.getItem('@loggedUserId');
+      const value = JSON.parse(valueString);
+
+      if(value !== null){
+        setLoggedUser(value);
+      }else{
+        handleUserNotLogged();
+      }          
+    } catch (error) {
+      console.log(error);
+    }
+    finally{
+        setLoggedUserLoading(false)
+    }
+};
+
+const handleGetVolumeCalculationByUsersAndDevicesIdList = async () => {
+    setCurrentVolumeAndBatteryLevelLoading(true);
+
+    if(!selectedDeviceLoading && selectedDevice.userDevice.usersAndDevicesId){
+    // console.log("Ta chamando o handleGetVolumeCalculationByUsersAndDevicesId para selectedDevice.usersAndDevicesId: ", selectedDevice.usersAndDevicesId)
+      try {
+        const [calculationResp] = await Promise.all([
+            GetVolumeCalculationByUsersAndDevicesIdList(selectedDevice.userDevice.usersAndDevicesId)
+        ]);
+        setCurrentVolumeAndBatteryLevel(calculationResp.data)
+      }
+      catch (err) {
+        if(err.message === "Request failed with status code 404"){
+            handleVolumeNotFound();
+        }else{
+          Alert.alert("Error Message: ", err.message);
+        }
+        setCurrentVolumeAndBatteryLevelError(err);
+      }
+      finally {
+        setCurrentVolumeAndBatteryLevelLoading(false);
+      }
+    }
+};
+
+
+const handleVolumeNotFound = () => {
+    Alert.alert("Error Message: ", "O dispositivo ainda nao realizou nenhuma leitura por favor aguarde (1h)");
+}
+
+
+const handleUserNotLogged = () => {
+  Alert.alert("Usuario nao registrado", `Por favor insira o usuário ID`);
+  navigation.push('Login');
+  // setTimeout(() => {navigation.push('SetNewDevice')}, 2000);      
+}
 
 
     const [ columns, setColumns ] = useState([
-        "Nível(%)",
-        "Hora",
+        "Volume(%)",
+        "Volume(L)",
         "Data",
+        "Hora", 
       ])
       const [ direction, setDirection ] = useState(null)
       const [ selectedColumn, setSelectedColumn ] = useState(null)
-
-      // useEffect(() => {
-      //   const unsubscribe = navigation.addListener('focus', () => {
-      //       retrieveDevicecSelected();
-      //   });
-      //   return unsubscribe;
-      // }, [navigation]);
 
       const formatDate = (date) =>{
         let yyyy = date.substring(0,4);
         let mm    = date.substring(5,7);
         let dd    = date.substring(8,10);
-        return `${dd}\\${mm}\\${yyyy}`;
+        return `${dd}/${mm}/${yyyy}`;
       }
 
       const formatHour = (date) =>{
         return date.substring(11,19);
       }
 
-      const maxVolume = (date) =>{
-        return date.substring(11,19);
+      const calcVolumePercentage = (data) =>{
+        console.log("data.volumeCalc.currentVolume")
+        let currentVolume = data.volumeCalc.currentVolume*1000;
+        let maxVolume = data.waterTank.theoVolume;
+        return currentVolume/maxVolume * 100
       }
-      const maxVolumeCalculation = () =>{
-        if(selectedDevice.deviceId){
-            let baseRadius = selectedDevice.selectedWaterTank.raioBase;
-            let height = selectedDevice.selectedWaterTank.altura;
-            let topRadius = selectedDevice.selectedWaterTank.raioTopo;
-            
-
-            
-            
-            let maxVolume = (Math.PI * height)*(Math.pow(baseRadius,2) + (baseRadius*topRadius) + Math.pow(topRadius,2))/3
-            
-            // console.log("baseRadius: ", baseRadius)
-            // console.log("height: ", height)
-            // console.log("topRadius: ", topRadius)
-            // console.log("maxVolume: ", maxVolume)
-            return maxVolume;
-            // return (Math.PI * height)*(Math.pow(baseRadius,2) + (baseRadius*topRadius) + Math.pow(topRadius,2))/3
-        }
-
-        return 0;
-
-    }
-
-    
-    const retrieveDevicecSelected = async () => {
-      try {
-        const valueString = await AsyncStorage.getItem('@deviceSelected_API');
-        const value = JSON.parse(valueString);
-
-      //   console.log("value value value")
-      //   console.log(value)
-
-        if(value !== null){
-          setSelectedDevice(value);      
-        }else{
-          handleDeviceNotSelected();
-        }
-
-        
-      } catch (error) {
-        console.log(error);
-      }
-    };
-
-    const currentVolume = (date) =>{
-      return date.substring(11,19);
-    }
-
-      const relativeVolume = (date) =>{
-        return date.substring(11,19);
-      }
-
-
+      
       const sortTable = (column) => {
         const newDirection = direction === "desc" ? "asc" : "desc" 
-        const sortedData = _.orderBy(endDeviceData, [column],[newDirection])
+        const sortedData = _.orderBy(logs, [column],[newDirection])
         setSelectedColumn(column)
         setDirection(newDirection)
-        setEndDeviceData(sortedData)
+        setLogs(sortedData)
       }
       const tableHeader = () => (
         <View style={styles.tableHeader}>
@@ -223,15 +326,15 @@ export function HistoryLevelPage( {navigation} ) {
               }}
             >
               <TouchableOpacity
-                    onPress={() => navigation.navigate('HistoryLevelBatPage')}
+                    onPress={() => navigation.push('HistoryLevelBatPage')}
                 >
                 <Image source={Battery}></Image>                                   
               </TouchableOpacity>
             </BatIcon>
           </TopBar>
-          {endDeviceData.length > 0 &&(
+          {logs.length > 0 ?(
             <FlatList 
-              data={endDeviceData}
+              data={logs}
               style={{top: 20, height: '80%', width:"90%"}}
               keyExtractor={(item, index) => index+""}
               ListHeaderComponent={tableHeader}
@@ -240,20 +343,29 @@ export function HistoryLevelPage( {navigation} ) {
               return (
                   <View style={{...styles.tableRow, backgroundColor: index % 2 == 1 ? "white" : "white"}}>
                       <View  style={styles.columnRowView}>
-                          <Text style={styles.columnRowTxt}>{item.analogIn1}</Text>   
+                          <Text style={styles.columnRowTxt}>{item.VolumePercentage.toFixed(2)}</Text>   
                       </View> 
                       <View style={styles.columnRowView}>
-                          <Text style={styles.columnRowTxt}>{formatHour(item.receivedAt)}</Text>   
+                          <Text style={styles.columnRowTxt}>{item.VolumeLiters.toFixed(2)}</Text>   
                       </View> 
                       <View style={styles.columnRowView}>
-                          <Text style={styles.columnRowTxt}>{formatDate(item.receivedAt)}</Text>   
+                          <Text style={styles.columnRowTxt}>{item.Date}</Text>   
+                      </View> 
+                      <View style={styles.columnRowView}>
+                          <Text style={styles.columnRowTxt}>{item.Hour}</Text>   
                       </View> 
                   </View>
               )
               }}
             />
 
-          )}
+          )
+          :(
+            <ActivityIndicatorDiv>
+                <ActivityIndicator size="large" color="#0000ff"></ActivityIndicator>
+            </ActivityIndicatorDiv>
+          )
+          }
           <StatusBar style="auto" />
         </View>
       </Background>
@@ -267,12 +379,12 @@ const styles = StyleSheet.create({
   },
   tableHeader: {
     flexDirection: "row",
-    justifyContent: "space-evenly",
+    justifyContent: "space-around",
     alignItems: "center",
     backgroundColor: "#004179",
     borderTopEndRadius: 10,
     borderTopStartRadius: 10,
-    height: 50
+    height: 50,
   },
   tableRow: {
     flexDirection: "row",
@@ -302,13 +414,13 @@ const styles = StyleSheet.create({
     color: "white",
     fontWeight: "bold",
     fontFamily: 'nunitoBold',
-    fontSize: 18,
+    fontSize: 16,
     
   },
   columnRowTxt: {
     fontFamily: 'nunitoLight',
     textAlign: "center",
-    fontSize: 18,
+    fontSize: 16,
 
   },
   columnRowView: {

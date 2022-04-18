@@ -85,6 +85,7 @@ const ArrowIcon = styled.View`
 export function Devices({ navigation }) {
   
   const [loggedUser, setLoggedUser] = useState("");
+  const [loggedUserLoading ,setLoggedUserLoading] = useState(true);
 
 
 
@@ -114,56 +115,62 @@ export function Devices({ navigation }) {
   }, []);
 
   useEffect(() => {
-    handleGetAllDevicesByUserId();
-  }, [loggedUser]);
+    if(!loggedUserLoading){
+      handleGetAllDevicesByUserId();
+    }
+  }, [loggedUser, loggedUserLoading]);
 
   useEffect(() => {
-    if(devicesList.length > 0){
+    if(!devicesListLoading){
       handleSelectedDevice();
     }
-  }, [devicesList]);
+  }, [devicesList, devicesListLoading]);
 
   const handleSelectedDevice = () =>{
-    if(devicesList.length > 0){
-      let foundDeviceSelected = devicesList.find(device => device.isSelected == true);
-      if(foundDeviceSelected){
-        setSelectedDevice(foundDeviceSelected);
-      }
+    let foundDeviceSelected = devicesList.find(device => device.userDevice.isSelected == true);
+    if(foundDeviceSelected){
+      setSelectedDevice(foundDeviceSelected);
     }
+    
   }
+
+  useEffect(()=>{
+    if(selectedDevice && selectedDevice.userDevice && selectedDevice.userDevice.waterTankName){
+      setSelectedDeviceLoading(false);
+    }
+  },[selectedDevice])
 
 
   const handleGetAllDevicesByUserId = async () => {
-    if(loggedUser){
-      try {
-        setDevicesListLoading(true);
-          const [devicesList] = await Promise.all([
-            GetAllDevicesByUserId(loggedUser)
-          ]);
-    
-          setDevicesList(devicesList.data)
+    setDevicesListLoading(true);
+    try {
+        const [devicesList] = await Promise.all([
+          GetAllDevicesByUserId(loggedUser)
+        ]);
+  
+        setDevicesList(devicesList.data)
 
-      }
-      catch (err) {
-        if(err.message === "Request failed with status code 404"){
-          handleDeviceListNotFound();
-        }else{
-          Alert.alert("Error Message: ", err.message);
-        }
-        setDevicesListError(err);
-      }
-      finally {
-        setDevicesListLoading(false);
-      }
     }
+    catch (err) {
+      if(err.message === "Request failed with status code 404"){
+        handleDeviceListNotFound();
+      }else{
+        Alert.alert("Error Message: ", err.message);
+      }
+      setDevicesListError(err);
+    }
+    finally {
+      setDevicesListLoading(false);
+    }
+    
   };
 
   const handleDelDevice = async () => {
-    if(selectedDevice.endDeviceID){
+    if(selectedDevice.userDevice.endDeviceID){
       try {
         setDeleteDeviceLoading(true);
           const [deleteResponse] = await Promise.all([
-            DelDeviceByDeviceId(selectedDevice.endDeviceID)
+            DelDeviceByDeviceId(selectedDevice.userDevice.endDeviceID)
           ]);    
           setDeleteDeviceResponse(deleteResponse.data)
           navigation.push('Devices');
@@ -185,7 +192,6 @@ export function Devices({ navigation }) {
   }
 
   const handlePatchUsersAndDevicesById = async (itemValue, itemIndex) => {
-    if(loggedUser){
       try {
         setSelectedDeviceLoading(true);
 
@@ -207,10 +213,11 @@ export function Devices({ navigation }) {
       finally {
         setSelectedDeviceLoading(false);
       }
-    }
+
   };
 
   const retrieveLoggedUser = async () => {
+    setLoggedUserLoading(true);
     try {
       const valueString = await AsyncStorage.getItem('@loggedUserId');
       const value = JSON.parse(valueString);
@@ -220,10 +227,11 @@ export function Devices({ navigation }) {
       } else {
         handleUserNotLogged();
       }
-
-
     } catch (error) {
       console.log(error);
+    }
+    finally {
+      setLoggedUserLoading(false);
     }
   };
 
@@ -234,7 +242,7 @@ export function Devices({ navigation }) {
   }
 
   const showDeviceList = (
-    devicesList.map((s, i) => { return <Picker.Item key={i} value={s} label={s.waterTankName} /> })
+    devicesList.map((s, i) => { return <Picker.Item key={i} value={s} label={s.userDevice.waterTankName} /> })
   )
 
   const [loaded] = useFonts({
@@ -296,11 +304,15 @@ export function Devices({ navigation }) {
         </InputView>
 
         <InputView>
-          {selectedDevice  != {}
+          {!selectedDeviceLoading
           && (
             <InputView>
-                <LabelText>Dispositivo selecionado: </LabelText>
-                <LabelText>{selectedDevice.waterTankName} </LabelText>
+              <LabelText>
+                Dispositivo selecionado: {selectedDevice.userDevice.waterTankName} {"\n"}
+                Marca: {selectedDevice.waterTank.brand}{"\n"}
+                Volume: {selectedDevice.waterTank.theoVolume} L{"\n"}
+
+              </LabelText>
             </InputView>
 
           )

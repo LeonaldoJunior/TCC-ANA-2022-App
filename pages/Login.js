@@ -96,12 +96,6 @@ const ArrowIcon = styled.View`
 
 export function Login({ navigation }) {
 
-
-    const [loaded] = useFonts({
-        nunitoLight: require("../assets/fonts/Nunito-Light.ttf"),
-        nunitoBold: require("../assets/fonts/Nunito-Bold.ttf")
-    });
-
     const [userId, setUserId] = useState("");
     const [disableLogin, setDisableLogin] = useState(true);
 
@@ -161,6 +155,15 @@ export function Login({ navigation }) {
 
     const onChangeUserIdInput = (inputString) => {
         setUserId(inputString);
+    }
+
+    const [loaded] = useFonts({
+        nunitoLight: require("../assets/fonts/Nunito-Light.ttf"),
+        nunitoBold: require("../assets/fonts/Nunito-Bold.ttf")
+    });
+
+    if(!loaded){
+    return null  
     }
 
 

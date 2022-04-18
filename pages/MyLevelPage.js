@@ -54,6 +54,11 @@ const BatIcon = styled.View`
 
 `;
 
+const BatIconLoading = styled.View`
+    top: 50px;
+    right: 10px
+`;
+
 const AnaIcon = styled.View`
     top: 12px;
     left: 10px
@@ -89,12 +94,15 @@ const Buttons = styled.View`
     align-items: center; 
 `;
 
+let interval;
 
 
 export function MyLevelPage( {navigation} ){
 
     const [levelImage, setLevelImage] = useState(require("../assets/waterTank0.png"));
     const [loggedUser ,setLoggedUser] = useState("");
+    const [loggedUserLoading ,setLoggedUserLoading] = useState(true);
+
 
     const [selectedDevice ,setSelectedDevice] = useState({});
     const [selectedDeviceLoading, setSelectedDeviceLoading] = useState(true);
@@ -103,6 +111,8 @@ export function MyLevelPage( {navigation} ){
     const [currentVolumeAndBatteryLevel ,setCurrentVolumeAndBatteryLevel] = useState({});
     const [currentVolumeAndBatteryLevelLoading, setCurrentVolumeAndBatteryLevelLoading] = useState(true);
     const [currentVolumeAndBatteryLevelError, setCurrentVolumeAndBatteryLevelError] = useState({});
+
+    const MINUTE_MS = 60000;
 
     
     const images = {
@@ -129,6 +139,18 @@ export function MyLevelPage( {navigation} ){
         0:  require("../assets/waterTank0.png")
     }
 
+    // useEffect(()=>{
+    //     console.log("DO USEEFFECT currentVolumeAndBatteryLevel")
+    //     console.log(currentVolumeAndBatteryLevel)
+    // },[currentVolumeAndBatteryLevel])
+
+
+    // useEffect(()=>{
+    //     console.log("DO USEEFFECT selectedDevice")
+    //     console.log(selectedDevice)
+    // },[selectedDevice])
+
+
     useEffect(() => {
         const unsubscribe = navigation.addListener('focus', () => {
             retrieveLoggedUser();
@@ -141,66 +163,93 @@ export function MyLevelPage( {navigation} ){
     },[])
 
     useEffect(() => {
-        if(loggedUser.length >= 5){
+        if(!loggedUserLoading){
             handleGetSelectedDeviceByUserId();
         }
-    }, [loggedUser])
+    }, [loggedUser, loggedUserLoading])
+    
+    // useEffect(() => {
+    //     if(selectedDevice != {}){
+    //         handleGetVolumeCalculationByUsersAndDevicesId();
+    //     }
+    // }, [selectedDevice])
+
+    useEffect(() => {
+        interval = setInterval(() => {
+            console.log("Com internal")
+            if(!selectedDeviceLoading){
+                handleGetVolumeCalculationByUsersAndDevicesId();
+            }
+        }, MINUTE_MS*0.1);
+
+        
+      
+        return () => { clearInterval(interval) }; // This represents the unmount function, in which you need to clear your interval to prevent memory leaks.
+      }, [])
+
+
     
     useEffect(() => {
-        if(selectedDevice != {}){
+        console.log("Sem internal")
+
+        if(!selectedDeviceLoading){
             handleGetVolumeCalculationByUsersAndDevicesId();
         }
-    }, [selectedDevice])
+       
+    }, [selectedDevice, selectedDeviceLoading])
+
 
 
     // TODO ATUALIZAR A IMAGEM
-    // useEffect(() => {
-    //     if(currentVolume >= 0 && maxVolume > 0){
-    //         let volumePercentage = currentVolume/maxVolume * 100
-    //         let roundedNumber = Math.floor(volumePercentage/5)*5
-    //         setLevelImage(images[roundedNumber])
-    //     }
-    // },[endDeviceData, selectedDevice])
+    // if(selectedDevice && selectedDevice.usersAndDevicesId){
+
+    useEffect(() => {
+        if(!currentVolumeAndBatteryLevelLoading && currentVolumeAndBatteryLevel.volumeCalc.currentVolume){
+            let currentVolume = currentVolumeAndBatteryLevel.volumeCalc.currentVolume*1000;
+            let maxVolume = currentVolumeAndBatteryLevel.waterTank.theoVolume;
+            let volumePercentage = currentVolume/maxVolume * 100
+            let roundedNumber = Math.floor(volumePercentage/5)*5
+            
+            setLevelImage(images[roundedNumber])
+        }
+    },[currentVolumeAndBatteryLevel, selectedDevice, currentVolumeAndBatteryLevelLoading])
+
+
 
     const handleGetSelectedDeviceByUserId = async () => {
-        if(loggedUser){
-            console.log("Chamou handleGetSelectedDeviceByUserId, logged user: ", loggedUser)
-
-          try {
-            setSelectedDeviceLoading(true);
-              const [selectedDeviceResp] = await Promise.all([
-                GetSelectedDeviceByUserId(loggedUser)
-              ]);
-              setSelectedDevice(selectedDeviceResp.data)
-    
-          }
-          catch (err) {
-            if(err.message === "Request failed with status code 404"){
-                handleDeviceNotSelected();
-            }else{
-              Alert.alert("Error Message: ", err.message);
-            }
-            setSelectedDeviceError(err);
-          }
-          finally {
-            setSelectedDeviceLoading(false);
-          }
+        
+        setSelectedDeviceLoading(true);
+        try {
+        const [selectedDeviceResp] = await Promise.all([
+            GetSelectedDeviceByUserId(loggedUser)
+        ]);
+        setSelectedDevice(selectedDeviceResp.data)
+            
         }
+        catch (err) {
+        if(err.message === "Request failed with status code 404"){
+            handleDeviceNotSelected();
+        }else{
+            Alert.alert("Error Message: ", err.message);
+        }
+        setSelectedDeviceError(err);
+        }
+        finally {
+        setSelectedDeviceLoading(false);
+        }
+        
     };
 
     const handleGetVolumeCalculationByUsersAndDevicesId = async () => {
-        console.log("Chamou handleGetVolumeCalculationByUsersAndDevicesId")
+        setCurrentVolumeAndBatteryLevelLoading(true);
 
-        if(selectedDevice && selectedDevice.usersAndDevicesId){
-        console.log("Chamou handleGetVolumeCalculationByUsersAndDevicesId, e o selectedDevice: ", selectedDevice.usersAndDevicesId)
-            
+        if(!selectedDeviceLoading && selectedDevice.userDevice.usersAndDevicesId){
+        // console.log("Ta chamando o handleGetVolumeCalculationByUsersAndDevicesId para selectedDevice.usersAndDevicesId: ", selectedDevice.usersAndDevicesId)
           try {
-            setCurrentVolumeAndBatteryLevelLoading(true);
-              const [calculationResp] = await Promise.all([
-                GetVolumeCalculationByUsersAndDevicesId(selectedDevice.usersAndDevicesId)
-              ]);
-              setCurrentVolumeAndBatteryLevelLoading(calculationResp.data)
-    
+            const [calculationResp] = await Promise.all([
+                GetVolumeCalculationByUsersAndDevicesId(selectedDevice.userDevice.usersAndDevicesId)
+            ]);
+            setCurrentVolumeAndBatteryLevel(calculationResp.data)
           }
           catch (err) {
             if(err.message === "Request failed with status code 404"){
@@ -221,6 +270,8 @@ export function MyLevelPage( {navigation} ){
     }
   
     const retrieveLoggedUser = async () => {
+        setLoggedUserLoading(true)
+
         try {
           const valueString = await AsyncStorage.getItem('@loggedUserId');
           const value = JSON.parse(valueString);
@@ -229,11 +280,12 @@ export function MyLevelPage( {navigation} ){
             setLoggedUser(value);
           }else{
             handleUserNotLogged();
-          }
-
-          
+          }          
         } catch (error) {
           console.log(error);
+        }
+        finally{
+            setLoggedUserLoading(false)
         }
     };
 
@@ -278,33 +330,42 @@ export function MyLevelPage( {navigation} ){
                   <Image source={anaIcon}></Image>                                   
               </AnaIcon>
               <TopBarText>Meu nível</TopBarText>
-              
-              <BatIcon 
-                style={{
-                    transform: [
-                        { scale: .8  }]
-                }}
-              >
-                <TouchableOpacity
-                    onPress={ () => navigation.push('HistoryLevelBatPage')}
-                >
-                <Battery currentBatLevel={currentVolumeAndBatteryLevel.currentBatteryLevel}></Battery>
-                {/* <Battery currentBatLevel={endDeviceData.analogIn1}></Battery> */}
-                </TouchableOpacity>
-              </BatIcon>
+              { !currentVolumeAndBatteryLevelLoading 
+                ? (
+                    <BatIcon 
+                        style={{
+                            transform: [
+                                { scale: .8  }]
+                        }}
+                    >
+                        <TouchableOpacity
+                            onPress={ () => { navigation.push('HistoryLevelBatPage'); window.clearInterval(interval) }}
+                        >
+                        <Battery currentBatLevel={currentVolumeAndBatteryLevel.volumeCalc.currentBatteryLevel}></Battery>
+                        </TouchableOpacity>
+                    </BatIcon>
+                )
+                :(
+                    <BatIconLoading>
+                        <ActivityIndicatorDiv>
+                            <ActivityIndicator size="large" color="#ffffff"></ActivityIndicator>
+                        </ActivityIndicatorDiv>
+                    </BatIconLoading>
+                )
+                }
             </TopBar>
 
 
-            {currentVolumeAndBatteryLevel && currentVolumeAndBatteryLevel.currentVolume 
+            { !currentVolumeAndBatteryLevelLoading && currentVolumeAndBatteryLevel.volumeCalc.currentVolume 
                 ?(
                     <LevelText>
-                        {selectedDevice.waterTankName}
+                        {selectedDevice.userDevice.waterTankName}
                         {"\n"}
                         Leitura atual
                         {"\n"}
-                        {(currentVolumeAndBatteryLevel.currentVolume*1000).toFixed(2)} L
+                        {(currentVolumeAndBatteryLevel.volumeCalc.currentVolume*1000).toFixed(2)} L
                         {"\n"}
-                        {formatDate(currentVolumeAndBatteryLevel.receivedAt)}
+                        {formatDate(currentVolumeAndBatteryLevel.eventsEndDevice.receivedAt)}
                     </LevelText>
                 )
                 :(
@@ -315,7 +376,7 @@ export function MyLevelPage( {navigation} ){
             }
 
             <WaterTank>
-                {currentVolumeAndBatteryLevel && currentVolumeAndBatteryLevel.currentVolume 
+                {!currentVolumeAndBatteryLevelLoading && currentVolumeAndBatteryLevel.volumeCalc.currentVolume 
                     ?(
                         <Image source={levelImage}/>                    
                     )
@@ -328,14 +389,15 @@ export function MyLevelPage( {navigation} ){
             <Buttons>
 
                 <TouchableOpacity
-                    onPress={ () => navigation.push('Devices')}>
+                    onPress={ () => { navigation.push('Devices'); window.clearInterval(interval) }}>
+
                     <Image 
                         style={{ margin: 20 }}
                         source={require('../assets/devices.png')}/>
 
                 </TouchableOpacity>
                 <TouchableOpacity
-                    onPress={ () => navigation.push('HistoryLevelPage')}>
+                    onPress={ () => { navigation.push('HistoryLevelPage'); window.clearInterval(interval) }}>
                     <Image source={require('../assets/historyButton.png')}/>
                 </TouchableOpacity>
 

@@ -1,15 +1,20 @@
 import { StatusBar } from 'expo-status-bar';
 import React, { useState, useEffect, children } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
-import { StyleSheet, Text, View, FlatList, TouchableOpacity, Image } from 'react-native';
+import { StyleSheet, Text, View, FlatList, TouchableOpacity, Image, Alert, ActivityIndicator } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import styled from 'styled-components';
 import Svg, { Path } from 'react-native-svg';
 import _ from "lodash"
 import Battery from '../assets/battery100.png'
 import backArrow from '../assets/backArrow.png'
-
 import { useFonts } from 'expo-font'
+import AsyncStorage  from '@react-native-async-storage/async-storage';
+
+import GetVolumeCalculationByUsersAndDevicesIdList from '../services/GetVolumeCalculationByUsersAndDevicesIdList'
+import GetSelectedDeviceByUserId from '../services/GetSelectedDeviceByUserId'
+
+
 
 const Background = ({ children }) => {
   return(
@@ -56,155 +61,221 @@ const ArrowIcon = styled.View`
   top: 12px;
 `;
 
+const ActivityIndicatorDiv = styled.View`
+    height: 150px;
+    margin-top: 30px;
+`;
+
+
+let interval;
+
+
 export function HistoryLevelBatPage( {navigation} ) {
-    const [loaded] = useFonts({
-      nunitoLight: require("../assets/fonts/Nunito-Light.ttf"),
-      nunitoBold: require("../assets/fonts/Nunito-Bold.ttf")
+  const [loggedUser ,setLoggedUser] = useState("");
+  const [loggedUserLoading ,setLoggedUserLoading] = useState(true);
+  
+  const [selectedDevice ,setSelectedDevice] = useState({});
+  const [selectedDeviceLoading, setSelectedDeviceLoading] = useState(true);
+  const [selectedDeviceError, setSelectedDeviceError] = useState({});
+
+  const [currentVolumeAndBatteryLevel ,setCurrentVolumeAndBatteryLevel] = useState({});
+  const [currentVolumeAndBatteryLevelLoading, setCurrentVolumeAndBatteryLevelLoading] = useState(true);
+  const [currentVolumeAndBatteryLevelError, setCurrentVolumeAndBatteryLevelError] = useState({});
+
+  const [logs, setLogs] = useState([]);
+
+  const maxBatLevel = 4.2;
+  
+
+  const MINUTE_MS = 60000;
+
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+        retrieveLoggedUser();
     });
-    if(!loaded){
-      return null  
+    return unsubscribe;
+  }, [navigation]);
+
+  useEffect(() => {
+      retrieveLoggedUser();
+  },[])
+
+
+  useEffect(() => {
+    if(!loggedUserLoading){
+        handleGetSelectedDeviceByUserId();
     }
+  }, [loggedUser, loggedUserLoading])
+
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if(!selectedDeviceLoading){
+        handleGetVolumeCalculationByUsersAndDevicesIdList();
+      }
+      else
+      { 
+          console.log ("selectedDevice != {},    device not selected")
+      }
+    }, MINUTE_MS*10);
+  
+    return () => clearInterval(interval); // This represents the unmount function, in which you need to clear your interval to prevent memory leaks.
+  }, [])
+
+  useEffect(() => {
+    console.log("Sem internal")
+    if(!selectedDeviceLoading){
+      handleGetVolumeCalculationByUsersAndDevicesIdList();
+    } 
+  }, [selectedDevice, selectedDeviceLoading])
+
+  // useEffect(()=>{
+  //   console.log("currentVolumeAndBatteryLevel")
+  //   console.log(currentVolumeAndBatteryLevel)
+  // },[currentVolumeAndBatteryLevel])
+
+  useEffect(()=>{
+    console.log("logs")
+    console.log(logs)
+  },[logs])
+
+
+  useEffect(()=>{
+    if(!currentVolumeAndBatteryLevelLoading){
+      setLogs(
+        currentVolumeAndBatteryLevel.map((elm)=>{
+          return {
+          "BatPercentage" : calcBatLevelPercentage(elm),
+          "BatVolts": elm.volumeCalc.currentBatteryLevel,
+          "Date": formatDate(elm.eventsEndDevice.receivedAt),
+          "Hour": formatHour(elm.eventsEndDevice.receivedAt)
+          }
+        })
+      )
+    }
+
+  },[currentVolumeAndBatteryLevel, currentVolumeAndBatteryLevelLoading])
+  
+  const handleGetSelectedDeviceByUserId = async () => {
+        
+    setSelectedDeviceLoading(true);
+    try {
+    const [selectedDeviceResp] = await Promise.all([
+        GetSelectedDeviceByUserId(loggedUser)
+    ]);
+    setSelectedDevice(selectedDeviceResp.data)
+        
+    }
+    catch (err) {
+    if(err.message === "Request failed with status code 404"){
+        handleDeviceNotSelected();
+    }else{
+        Alert.alert("Error Message: ", err.message);
+    }
+    setSelectedDeviceError(err);
+    }
+    finally {
+    setSelectedDeviceLoading(false);
+    }
+    
+  };
+
+  const retrieveLoggedUser = async () => {
+    setLoggedUserLoading(true)
+
+    try {
+      const valueString = await AsyncStorage.getItem('@loggedUserId');
+      const value = JSON.parse(valueString);
+
+      if(value !== null){
+        setLoggedUser(value);
+      }else{
+        handleUserNotLogged();
+      }          
+    } catch (error) {
+      console.log(error);
+    }
+    finally{
+        setLoggedUserLoading(false)
+    }
+};
+
+const handleGetVolumeCalculationByUsersAndDevicesIdList = async () => {
+    setCurrentVolumeAndBatteryLevelLoading(true);
+
+    if(!selectedDeviceLoading && selectedDevice.userDevice.usersAndDevicesId){
+    // console.log("Ta chamando o handleGetVolumeCalculationByUsersAndDevicesId para selectedDevice.usersAndDevicesId: ", selectedDevice.usersAndDevicesId)
+      try {
+        const [calculationResp] = await Promise.all([
+            GetVolumeCalculationByUsersAndDevicesIdList(selectedDevice.userDevice.usersAndDevicesId)
+        ]);
+        setCurrentVolumeAndBatteryLevel(calculationResp.data)
+      }
+      catch (err) {
+        if(err.message === "Request failed with status code 404"){
+            handleVolumeNotFound();
+        }else{
+          Alert.alert("Error Message: ", err.message);
+        }
+        setCurrentVolumeAndBatteryLevelError(err);
+      }
+      finally {
+        setCurrentVolumeAndBatteryLevelLoading(false);
+      }
+    }
+};
+
+
+const handleVolumeNotFound = () => {
+    Alert.alert("Error Message: ", "O dispositivo ainda nao realizou nenhuma leitura por favor aguarde (1h)");
+}
+
+
+const handleUserNotLogged = () => {
+  Alert.alert("Usuario nao registrado", `Por favor insira o usuário ID`);
+  navigation.push('Login');
+  // setTimeout(() => {navigation.push('SetNewDevice')}, 2000);      
+}
+
+
     const [ columns, setColumns ] = useState([
         "Bateria(%)",
-        "Hora",
+        "Bateria(V)",
         "Data",
+        "Hora", 
       ])
       const [ direction, setDirection ] = useState(null)
       const [ selectedColumn, setSelectedColumn ] = useState(null)
-      const [ logs, setlogs ] = useState([
-        {
-            Bateria: "70%",
-            Hora: "04:00",
-            Data: "04/09/2021",
-        },
-        {
-            Bateria: "70%",
-            Hora: "04:00",
-            Data: "04/09/2021",
-        },
-        {
-            Bateria: "70%",
-            Hora: "04:00",
-            Data: "04/09/2021",
-        },
-        {
-            Bateria: "70%",
-            Hora: "04:00",
-            Data: "04/09/2021",
-        },
-        {
-            Bateria: "70%",
-            Hora: "04:00",
-            Data: "04/09/2021",
-        },
-        {
-            Bateria: "70%",
-            Hora: "04:00",
-            Data: "04/09/2021",
-        },
-        {
-            Bateria: "70%",
-            Hora: "04:00",
-            Data: "04/09/2021",
-        },
-        {
-            Bateria: "70%",
-            Hora: "04:00",
-            Data: "04/09/2021",
-        },
-        {
-            Bateria: "70%",
-            Hora: "04:00",
-            Data: "04/09/2021",
-        },
-        {
-            Bateria: "70%",
-            Hora: "04:00",
-            Data: "04/09/2021",
-        },
-        
-        {
-            Bateria: "80%",
-            Hora: "03:00",
-            Data: "04/09/2021",
-        },
-        {
-            Bateria: "90%",
-            Hora: "02:00",
-            Data: "04/09/2021",
-        },
-        {
-            Bateria: "100%",
-            Hora: "01:00",
-            Data: "04/09/2021",
-        },
-        {
-          Bateria: "90%",
-          Hora: "02:00",
-          Data: "04/09/2021",
-        },
-        {
-          Bateria: "90%",
-          Hora: "02:00",
-          Data: "04/09/2021",
-        },
-        {
-          Bateria: "90%",
-          Hora: "02:00",
-          Data: "04/09/2021",
-        },
-        {
-          Bateria: "90%",
-          Hora: "02:00",
-          Data: "04/09/2021",
-        },
-        {
-          Bateria: "90%",
-          Hora: "02:00",
-          Data: "04/09/2021",
-        },
-        {
-          Bateria: "90%",
-          Hora: "02:00",
-          Data: "04/09/2021",
-        },
-        {
-          Bateria: "90%",
-          Hora: "02:00",
-          Data: "04/09/2021",
-        },
-      ])
 
+      const formatDate = (date) =>{
+        let yyyy = date.substring(0,4);
+        let mm    = date.substring(5,7);
+        let dd    = date.substring(8,10);
+        return `${dd}/${mm}/${yyyy}`;
+      }
 
-    // const isLoggedIn = this.state.isLoggedIn;
-    let backArrowIcon;
-    if (true) {
-        backArrowIcon = 
-        <ArrowIcon>
-            <TouchableOpacity
-                // onPress={ () => navigation.navigate('HistoryLevelBatPage')}
-                onPress={() => navigation.goback()}
-            >
-            <Image source={backArrow}></Image>                                   
-            </TouchableOpacity>
-        </ArrowIcon>
-    } else {
-        backArrowIcon = 
-        <ArrowIcon>
-            <TouchableOpacity
-                onPress={ () => navigation.navigate('HistoryLevelBatPage')}
-            >
-            <Image source={backArrow}></Image>                                   
-            </TouchableOpacity>
-        </ArrowIcon>      
-    }
-    
+      const formatHour = (date) =>{
+        return date.substring(11,19);
+      }
+
+      const calcBatLevelPercentage = (data) => {
+        let currentBatLevel = data.volumeCalc.currentBatteryLevel;
+        let batPercen = currentBatLevel/maxBatLevel * 100
+        if(batPercen > 100){
+          return 100;
+        }
+        else{
+          return batPercen;
+        }
+      }
+      
       const sortTable = (column) => {
         const newDirection = direction === "desc" ? "asc" : "desc" 
         const sortedData = _.orderBy(logs, [column],[newDirection])
         setSelectedColumn(column)
         setDirection(newDirection)
-        setlogs(sortedData)
+        setLogs(sortedData)
       }
       const tableHeader = () => (
         <View style={styles.tableHeader}>
@@ -230,13 +301,20 @@ export function HistoryLevelBatPage( {navigation} ) {
         </View>
       )
 
+  const [loaded] = useFonts({
+    nunitoLight: require("../assets/fonts/Nunito-Light.ttf"),
+    nunitoBold: require("../assets/fonts/Nunito-Bold.ttf")
+  });
+  if(!loaded){
+    return null  
+  }
+
   return (
       <Background>
         <View style={styles.container}>
           <TopBar>
             <ArrowIcon>
                 <TouchableOpacity
-                    // onPress={ () => navigation.navigate('HistoryLevelBatPage')}
                     onPress={() => navigation.goBack()}
                 >
                 <Image source={backArrow}></Image>                                   
@@ -251,32 +329,47 @@ export function HistoryLevelBatPage( {navigation} ) {
                 ]
               }}
             >
+              <TouchableOpacity
+                    onPress={() => navigation.push('HistoryLevelBatPage')}
+                >
                 <Image source={Battery}></Image>                                   
+              </TouchableOpacity>
             </BatIcon>
           </TopBar>
-
-          <FlatList 
-            data={logs}
-            style={{top: 20, height: '80%', width:"90%"}}
-            keyExtractor={(item, index) => index+""}
-            ListHeaderComponent={tableHeader}
-            stickyHeaderIndices={[0]}
-            renderItem={({item, index})=> {
-            return (
-                <View style={{...styles.tableRow, backgroundColor: index % 2 == 1 ? "white" : "white"}}>
-                    <View  style={styles.columnRowView}>
-                        <Text style={styles.columnRowTxt}>{item.Bateria}</Text>   
-                    </View> 
-                    <View style={styles.columnRowView}>
-                        <Text style={styles.columnRowTxt}>{item.Data}</Text>   
-                    </View> 
-                    <View style={styles.columnRowView}>
-                        <Text style={styles.columnRowTxt}>{item.Hora}</Text>   
-                    </View> 
-                </View>
-            )
-            }}
-          />
+          {logs.length > 0 ?(
+          // {false &&(
+            <FlatList 
+              data={logs}
+              style={{top: 20, height: '80%', width:"90%"}}
+              keyExtractor={(item, index) => index+""}
+              ListHeaderComponent={tableHeader}
+              stickyHeaderIndices={[0]}
+              renderItem={({item, index})=> {
+              return (
+                  <View style={{...styles.tableRow, backgroundColor: index % 2 == 1 ? "white" : "white"}}>
+                      <View  style={styles.columnRowView}>
+                          <Text style={styles.columnRowTxt}>{item.BatPercentage.toFixed(0)}</Text>   
+                      </View> 
+                      <View style={styles.columnRowView}>
+                          <Text style={styles.columnRowTxt}>{item.BatVolts.toFixed(2)}</Text>   
+                      </View> 
+                      <View style={styles.columnRowView}>
+                          <Text style={styles.columnRowTxt}>{item.Date}</Text>   
+                      </View> 
+                      <View style={styles.columnRowView}>
+                          <Text style={styles.columnRowTxt}>{item.Hour}</Text>   
+                      </View> 
+                  </View>
+              )
+              }}
+            />
+          )
+          :(
+            <ActivityIndicatorDiv>
+                <ActivityIndicator size="large" color="#0000ff"></ActivityIndicator>
+            </ActivityIndicatorDiv>
+          )
+          }
           <StatusBar style="auto" />
         </View>
       </Background>
@@ -290,12 +383,12 @@ const styles = StyleSheet.create({
   },
   tableHeader: {
     flexDirection: "row",
-    justifyContent: "space-evenly",
+    justifyContent: "space-around",
     alignItems: "center",
     backgroundColor: "#004179",
     borderTopEndRadius: 10,
     borderTopStartRadius: 10,
-    height: 50
+    height: 50,
   },
   tableRow: {
     flexDirection: "row",
@@ -325,13 +418,13 @@ const styles = StyleSheet.create({
     color: "white",
     fontWeight: "bold",
     fontFamily: 'nunitoBold',
-    fontSize: 18,
+    fontSize: 16,
     
   },
   columnRowTxt: {
     fontFamily: 'nunitoLight',
     textAlign: "center",
-    fontSize: 18,
+    fontSize: 16,
 
   },
   columnRowView: {
