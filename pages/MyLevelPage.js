@@ -84,7 +84,8 @@ const ActivityIndicatorDiv = styled.View`
 const WaterTank = styled.View`
     justify-content: center;
     align-items: center; 
-    margin-top: 30px;
+    margin-top: 20px;
+    margin-bottom: 20px;
     height: 200px;
 
 `;
@@ -176,7 +177,11 @@ export function MyLevelPage( {navigation} ){
 
     useEffect(() => {
         interval = setInterval(() => {
-            console.log("Com internal")
+            console.log("Com internal MyLevelPage")
+            console.log("selectedDeviceLoading do internal")
+            console.log(selectedDeviceLoading)
+            console.log(selectedDevice)
+            console.log("selectedDevice")
             if(!selectedDeviceLoading){
                 handleGetVolumeCalculationByUsersAndDevicesId();
             }
@@ -199,6 +204,14 @@ export function MyLevelPage( {navigation} ){
     }, [selectedDevice, selectedDeviceLoading])
 
 
+    useEffect(() => {
+        console.log("selectedDevice")
+        console.log(selectedDevice)
+
+       
+    }, [selectedDevice, selectedDeviceLoading])
+
+
 
     // TODO ATUALIZAR A IMAGEM
     // if(selectedDevice && selectedDevice.usersAndDevicesId){
@@ -209,7 +222,8 @@ export function MyLevelPage( {navigation} ){
             let maxVolume = currentVolumeAndBatteryLevel.waterTank.theoVolume;
             let volumePercentage = currentVolume/maxVolume * 100
             let roundedNumber = Math.floor(volumePercentage/5)*5
-            
+            console.log("roundedNumber")
+            console.log(roundedNumber)
             setLevelImage(images[roundedNumber])
         }
     },[currentVolumeAndBatteryLevel, selectedDevice, currentVolumeAndBatteryLevelLoading])
@@ -218,8 +232,8 @@ export function MyLevelPage( {navigation} ){
 
     const handleGetSelectedDeviceByUserId = async () => {
         
-        setSelectedDeviceLoading(true);
         try {
+        setSelectedDeviceLoading(true);
         const [selectedDeviceResp] = await Promise.all([
             GetSelectedDeviceByUserId(loggedUser)
         ]);
@@ -241,11 +255,11 @@ export function MyLevelPage( {navigation} ){
     };
 
     const handleGetVolumeCalculationByUsersAndDevicesId = async () => {
-        setCurrentVolumeAndBatteryLevelLoading(true);
-
+        
         if(!selectedDeviceLoading && selectedDevice.userDevice.usersAndDevicesId){
-        // console.log("Ta chamando o handleGetVolumeCalculationByUsersAndDevicesId para selectedDevice.usersAndDevicesId: ", selectedDevice.usersAndDevicesId)
-          try {
+            console.log("Ta chamando o handleGetVolumeCalculationByUsersAndDevicesId para selectedDevice.usersAndDevicesId: ", selectedDevice.usersAndDevicesId)
+            try {
+            setCurrentVolumeAndBatteryLevelLoading(true);
             const [calculationResp] = await Promise.all([
                 GetVolumeCalculationByUsersAndDevicesId(selectedDevice.userDevice.usersAndDevicesId)
             ]);
@@ -291,14 +305,15 @@ export function MyLevelPage( {navigation} ){
 
     const handleUserNotLogged = () => {
         Alert.alert("Usuario nao registrado", `Por favor insira o usuário ID`);
+        window.clearInterval(interval)
         navigation.push('Login');
         // setTimeout(() => {navigation.navigate('SetNewDevice')}, 2000);      
     }
 
     const handleDeviceNotSelected = () => {
         Alert.alert("Nenhum dispositivo selecionado", `Por favor, selecione um dispositivo`);
+        window.clearInterval(interval)
         navigation.push('Devices');
-        // setTimeout(() => {navigation.navigate('SetNewDevice')}, 2000);      
     }
 
     const formatDate = (dateString) => {
@@ -392,14 +407,17 @@ export function MyLevelPage( {navigation} ){
                     onPress={ () => { navigation.push('Devices'); window.clearInterval(interval) }}>
 
                     <Image 
-                        style={{ margin: 20 }}
+                        style={{ margin: 0 }}
                         source={require('../assets/devices.png')}/>
 
                 </TouchableOpacity>
                 <TouchableOpacity
                     onPress={ () => { navigation.push('HistoryLevelPage'); window.clearInterval(interval) }}>
-                    <Image source={require('../assets/historyButton.png')}/>
+                    <Image 
+                        style={{ margin: 5 }}
+                        source={require('../assets/historyButton.png')}/>
                 </TouchableOpacity>
+
 
 
             </Buttons>

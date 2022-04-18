@@ -10,6 +10,7 @@ import { Login } from './pages/Login'
 import { SetNewDevice } from './pages/SetNewDevice'
 import { SetWatertankMeasures } from './pages/SetWatertankMeasures'
 import { NavigationContainer } from '@react-navigation/native';
+import { GraphicsLevelPage } from './pages/GraphicsLevelPage';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { SplashPage } from './pages/SplashPage';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -35,6 +36,7 @@ export default function App() {
           <Stack.Screen name="Login" component={Login} />
           <Stack.Screen name="SetNewDevice" component={SetNewDevice} />
           <Stack.Screen name="SetWatertankMeasures" component={SetWatertankMeasures} />
+          <Stack.Screen name="GraphicsLevelPage" component={GraphicsLevelPage} />
           
           
         </Stack.Navigator>

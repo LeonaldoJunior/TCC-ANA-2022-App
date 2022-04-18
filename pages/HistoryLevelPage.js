@@ -66,6 +66,12 @@ const ActivityIndicatorDiv = styled.View`
     margin-top: 30px;
 `;
 
+const Buttons = styled.View`    
+    justify-content: center;
+    align-items: center; 
+    margin-top: 30px;
+`;
+
 let interval;
 
 
@@ -110,6 +116,8 @@ export function HistoryLevelPage( {navigation} ) {
 
   useEffect(() => {
     const interval = setInterval(() => {
+      console.log("Com internal HistoryLevelPage")
+
       if(!selectedDeviceLoading){
         handleGetVolumeCalculationByUsersAndDevicesIdList();
       }
@@ -117,7 +125,7 @@ export function HistoryLevelPage( {navigation} ) {
       { 
           console.log ("selectedDevice != {},    device not selected")
       }
-    }, MINUTE_MS*10);
+    }, MINUTE_MS);
   
     return () => clearInterval(interval); // This represents the unmount function, in which you need to clear your interval to prevent memory leaks.
   }, [])
@@ -234,7 +242,9 @@ const handleVolumeNotFound = () => {
 
 const handleUserNotLogged = () => {
   Alert.alert("Usuario nao registrado", `Por favor insira o usuário ID`);
+  window.clearInterval(interval)
   navigation.push('Login');
+
   // setTimeout(() => {navigation.push('SetNewDevice')}, 2000);      
 }
 
@@ -260,7 +270,6 @@ const handleUserNotLogged = () => {
       }
 
       const calcVolumePercentage = (data) =>{
-        console.log("data.volumeCalc.currentVolume")
         let currentVolume = data.volumeCalc.currentVolume*1000;
         let maxVolume = data.waterTank.theoVolume;
         return currentVolume/maxVolume * 100
@@ -326,8 +335,8 @@ const handleUserNotLogged = () => {
               }}
             >
               <TouchableOpacity
-                    onPress={() => navigation.push('HistoryLevelBatPage')}
-                >
+                onPress={ () => { navigation.push('HistoryLevelBatPage'); window.clearInterval(interval) }}
+              >
                 <Image source={Battery}></Image>                                   
               </TouchableOpacity>
             </BatIcon>
@@ -335,7 +344,7 @@ const handleUserNotLogged = () => {
           {logs.length > 0 ?(
             <FlatList 
               data={logs}
-              style={{top: 20, height: '80%', width:"90%"}}
+              style={{top: 20, bottom: 20, height: '70%', width:"90%"}}
               keyExtractor={(item, index) => index+""}
               ListHeaderComponent={tableHeader}
               stickyHeaderIndices={[0]}
@@ -367,6 +376,12 @@ const handleUserNotLogged = () => {
           )
           }
           <StatusBar style="auto" />
+          <Buttons>
+            <TouchableOpacity
+                onPress={ () => { window.clearInterval(interval); navigation.push('GraphicsLevelPage'); }}>
+                <Image source={require('../assets/graphics.png')}/>
+            </TouchableOpacity>
+          </Buttons>
         </View>
       </Background>
   );
