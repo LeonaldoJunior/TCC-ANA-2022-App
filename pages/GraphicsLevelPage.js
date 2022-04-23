@@ -4,12 +4,13 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { StyleSheet, Text, View, FlatList, TouchableOpacity, Image, Alert, ActivityIndicator, Picker } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import styled from 'styled-components';
-import Svg, { Path } from 'react-native-svg';
 import _ from "lodash"
 import Battery from '../assets/battery100.png'
 import backArrow from '../assets/backArrow.png'
 import { useFonts } from 'expo-font'
 import AsyncStorage  from '@react-native-async-storage/async-storage';
+import { LineChart,AreaChart, YAxis,XAxis, Grid, Decorator } from 'react-native-svg-charts'
+import * as shape from 'd3-shape'
 
 import GetVolumeCalculationByUsersAndDevicesIdListFilterDay from '../services/GetVolumeCalculationByUsersAndDevicesIdListFilterDay'
 import GetSelectedDeviceByUserId from '../services/GetSelectedDeviceByUserId'
@@ -121,7 +122,102 @@ export function GraphicsLevelPage( {navigation} ) {
     { value: '360', label: '360 dias' }
   ]
 
+  // const data = [ 50, 10, 40, 95, -4, -24, 85, 91, 35, 53, -53, 23 ]
+  const xAxesSvg = {
+    fontSize: 10,
+    fill: "black",
+    rotation: 70,
+    originY: 15,
+    y: 10,
+  };
+  const yAxesSvg = { fontSize: 12, fill: "black", marginLeft: 20 };
+  const gridSvg = { left: 10,  fill: "black" };
 
+  const verticalContentInset = { left: 0, right: 10, top: 10, bottom: 1 };
+  const xAxisHeight = 50;
+
+  const data=[ 
+    { xValue: 0, yValue: 0},
+    { xValue: 1, yValue: 1},
+    { xValue: 2, yValue: 2},
+    { xValue: 3, yValue: 3},
+    { xValue: 4, yValue: 4},
+    { xValue: 5, yValue: 5},
+    { xValue: 6, yValue: 6},
+    { xValue: 7, yValue: 7},
+    { xValue: 8, yValue: 8},
+    { xValue: 9, yValue: 9},
+    { xValue: 10, yValue: 10},
+    { xValue: 11, yValue: 11},
+    { xValue: 12, yValue: 12},
+    { xValue: 13, yValue: 13},
+    { xValue: 14, yValue: 14},
+    { xValue: 15, yValue: 15},
+    { xValue: 16, yValue: 16},
+    { xValue: 17, yValue: 17},
+    { xValue: 18, yValue: 18},
+    { xValue: 19, yValue: 19},
+    { xValue: 20, yValue: 20},
+    { xValue: 21, yValue: 21},
+    { xValue: 22, yValue: 22},
+    { xValue: 23, yValue: 23},
+    { xValue: 24, yValue: 24},
+  ]
+  var xAxisData = [ 
+    { xValue: 1},
+    { xValue: 2},
+    { xValue: 3},
+    { xValue: 4},
+    { xValue: 5},
+    { xValue: 6},
+    { xValue: 7},
+    { xValue: 8},
+    { xValue: 9},
+    { xValue: 10},
+    { xValue: 11},
+    { xValue: 12},
+    { xValue: 13},
+    { xValue: 14},
+    { xValue: 15},
+    { xValue: 16},
+    { xValue: 17},
+    { xValue: 18},
+    { xValue: 19},
+    { xValue: 20},
+    { xValue: 21},
+    { xValue: 22},
+    { xValue: 23},
+    { xValue: 24},
+  ]
+
+  var yAxisData = [ 
+    { yValue: 0},
+    { yValue: 1},
+    { yValue: 2},
+    { yValue: 3},
+    { yalue: 4},
+    { yValue: 5},
+    { yValue: 6},
+    { yalue: 7},
+    { yalue: 8},
+    { yValue: 9},
+    { yValue: 10},
+    { yValue: 11},
+    { yValue: 12},
+    { yValue: 13},
+    { yValue: 14},
+    { yValue: 15},
+    { yValue: 16},
+    { yValue: 17},
+    { yValue: 18},
+    { yValue: 19},
+    { yValue: 20},
+    { yValue: 21},
+    { yValue: 22},
+    { yValue: 23},
+    { yValue: 24}
+  ]
+    
   const optionsList = (
     // devicesList.map((s, i) => { return <Picker.Item key={i} value={s} label={s.userDevice.waterTankName} /> })
     options.map((s, i) => { return <Picker.Item key={i} value={s.value} label={s.label} /> })
@@ -241,19 +337,16 @@ export function GraphicsLevelPage( {navigation} ) {
     }
 };
 
-const handleGetVolumeCalculationByUsersAndDevicesIdByDay = async () => {
+const handleGetVolumeCalculationByUsersAndDevicesIdByDay = async (lastDays) => {
+
     setCurrentVolumeAndBatteryLevelLoading(true);
 
     if(!selectedDeviceLoading && selectedDevice.userDevice.usersAndDevicesId){
     // console.log("Ta chamando o handleGetVolumeCalculationByUsersAndDevicesId para selectedDevice.usersAndDevicesId: ", selectedDevice.usersAndDevicesId)
-      
-    console.log("selectedDevice.userDevice.usersAndDevicesId")
-    console.log(selectedDevice.userDevice.usersAndDevicesId)
-    console.log("showLast")
-    console.log(showLast)
+
     try {
         const [calculationResp] = await Promise.all([
-          GetVolumeCalculationByUsersAndDevicesIdListFilterDay(selectedDevice.userDevice.usersAndDevicesId, showLast)
+          GetVolumeCalculationByUsersAndDevicesIdListFilterDay(selectedDevice.userDevice.usersAndDevicesId, lastDays)
         ]);
         setCurrentVolumeAndBatteryLevel(calculationResp.data)
       }
@@ -322,7 +415,7 @@ const handleUserNotLogged = () => {
 
   return (
       <Background>
-        <View style={styles.container}>
+        <View>
           <TopBar>
             <ArrowIcon>
                 <TouchableOpacity
@@ -346,88 +439,90 @@ const handleUserNotLogged = () => {
                 <Image source={Battery}></Image>                                   
               </TouchableOpacity>
             </BatIcon>
-          </TopBar>
-          {true > 0 ?(
+          </TopBar>            
+          {true 
+            ? (
             
-            <InputView>
-            <LabelText>Carregar os dados dos ultimos: </LabelText>
-            <Picker
-              selectedValue={showLast}
-              style={{ height: 50, width: 150, border: 10 }}
-              onValueChange={handleGetVolumeCalculationByUsersAndDevicesIdByDay}
-              mode={"dropdown"}
-            >
-              <Picker.Item label="" value="" />
-              {optionsList}
-            </Picker>
-            </InputView>
-
-
-
-          )
-          :(
-            <ActivityIndicatorDiv>
-                <ActivityIndicator size="large" color="#0000ff"></ActivityIndicator>
-            </ActivityIndicatorDiv>
-          )
+              <InputView>
+              <LabelText>Carregar os dados dos ultimos: </LabelText>
+              <Picker
+                selectedValue={showLast}
+                style={{ height: 50, width: 150, border: 10 }}
+                onValueChange={handleGetVolumeCalculationByUsersAndDevicesIdByDay}
+                mode={"dropdown"}
+              >
+                <Picker.Item label="" value="" />
+                {optionsList}
+              </Picker>
+              
+              </InputView>
+            )
+            :(
+              <ActivityIndicatorDiv>
+                  <ActivityIndicator size="large" color="#0000ff"></ActivityIndicator>
+              </ActivityIndicatorDiv>
+            )
           }
-          <StatusBar style="auto" />
+
+          <View
+            style={{
+              paddingRight: 10,
+              height: 400,
+              padding: 0,
+              flexDirection: "row"
+            }}
+          >
+            <YAxis
+              data={yAxisData}
+              yAccessor={({ item }) => item.yValue}
+              style={{ marginBottom: xAxisHeight }}
+              contentInset={verticalContentInset}
+              svg={yAxesSvg}
+              formatLabel={value => value + " "}
+            />
+            <View style={{ flex: 1, marginLeft: 10 }}>
+              <LineChart
+                  style={{ flex: 1, marginLeft: 16 }}
+
+                  data={data}
+                  yAccessor={({ item }) => item.yValue}
+                  xAccessor={({ item }) => item.xValue}
+                  svg={{ stroke: 'rgb(134, 65, 244)' }}
+                  numberOfTicks={24}
+                  contentInset={verticalContentInset}
+
+
+                  // xScale={scale.scaleTime}
+                  // svg={{ stroke: "rgb(134, 65, 244)" }}
+
+                  spacing={0.2}
+                  gridMin={0}
+
+              >
+                <Grid />
+                <Grid 
+                  direction={Grid.Direction.VERTICAL}
+                  />
+              </LineChart>
+              <XAxis
+                style={{ marginHorizontal: -10, height: xAxisHeight }}
+                data={xAxisData}
+                xAccessor={({ item }) => item.xValue}
+                contentInset={{ left: 30, right: 10, top: -100, bottom: -100}}
+                formatLabel={value => value + "11:00"}
+
+                svg={xAxesSvg}
+              />
+            </View>
+          </View>
+
+
+
+
+
+
         </View>
       </Background>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  tableHeader: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    alignItems: "center",
-    backgroundColor: "#004179",
-    borderTopEndRadius: 10,
-    borderTopStartRadius: 10,
-    height: 50,
-  },
-  tableRow: {
-    flexDirection: "row",
-    height: 47,
-    alignItems:"center",
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#ddd',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.8,
-    shadowRadius: 2,
-    elevation: 1,    
-    marginTop: 5,
-
-
-    marginLeft: 2,
-    marginRight: 2,
-  },
-  columnHeader: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems:"center",
-
-  },
-  columnHeaderTxt: {
-    color: "white",
-    fontWeight: "bold",
-    fontFamily: 'nunitoBold',
-    fontSize: 16,
-    
-  },
-  columnRowTxt: {
-    fontFamily: 'nunitoLight',
-    textAlign: "center",
-    fontSize: 16,
-
-  },
-  columnRowView: {
-    flex: 1,  }
-});
