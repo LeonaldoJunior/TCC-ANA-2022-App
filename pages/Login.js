@@ -16,7 +16,6 @@ import {
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import styled from 'styled-components';
-import Svg, { Path } from 'react-native-svg';
 import _, { sortedLastIndex } from "lodash"
 import { useFonts } from 'expo-font'
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -94,13 +93,21 @@ const ArrowIcon = styled.View`
   top: 12px;
 `;
 
+const ActivityIndicatorDiv = styled.View`
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+`;
+
 export function Login({ navigation }) {
 
     const [userId, setUserId] = useState("");
     const [disableLogin, setDisableLogin] = useState(true);
 
     const [userIdResponse, setUserIdResponse] = useState("");
-    const [userIdResponseLoading, setUserIdResponseLoading] = useState(true);
+    const [userIdResponseLoading, setUserIdResponseLoading] = useState(false);
     const [userIdResponseError, setUserIdResponseError] = useState({});
 
 
@@ -113,8 +120,13 @@ export function Login({ navigation }) {
             setUserIdResponse(user.data)
         }
         catch (err) {
-            console.log(err)
-            Alert.alert("Error Message: ", err.message);
+            if(err.message === "Request failed with status code 404"){
+              Alert.alert("Mensagem de erro: ", "Desculpe não foi encontrado o usuario tente novamente");
+            }else if(err.message === "Request failed with status code 502"){
+              Alert.alert("Mensagem de erro ", "Desculpe estamos tendo problemas com a conexão, certifique-se que está conectado a internet e tente novamente!");
+            }else{
+              Alert.alert("Mensagem de erro: ", err.message);
+            }
             setUserIdResponseError(err);
         }
         finally {
@@ -170,61 +182,69 @@ export function Login({ navigation }) {
     // React.useEffect(console.log("ASDASDASDASD"))
     return (
         <Background>
+            {!userIdResponseLoading 
+            ? (
+                <View style={styles.container}>
 
-            <View style={styles.container}>
-
-                <TopBar>
-                    <ArrowIcon>
-                        <TouchableOpacity
-                            onPress={() => navigation.goBack()}
-                        >
-                            <Image source={backArrow}></Image>
-                        </TouchableOpacity>
-                    </ArrowIcon>
-                    <TopBarText>Entrar</TopBarText>
-
-                    <BatIcon
-                        style={{
-                            transform: [
-                                { scale: .8 }
-                            ]
-                        }}
-                    >
-                        <TouchableOpacity onPress={() => navigation.navigate('HistoryLevelBatPage')}>
-                            <Image source={Battery}></Image>
-                        </TouchableOpacity>
-                    </BatIcon>
-                </TopBar>
-                <InputView>
-                    <LabelText>ID de Usuario</LabelText>
-                    <TextInput
-                        onChangeText={onChangeUserIdInput}
-                        value={userId}
-                        placeholder="id"
-                        keyboardType="default"
-                    />
-                </InputView>
-
-                {!disableLogin
-                    ? (
-                        <ButtonView>
+                    <TopBar>
+                        <ArrowIcon>
                             <TouchableOpacity
-                                onPress={hangleCheckUserId}
+                                onPress={() => navigation.goBack()}
                             >
-                                <Image source={login}></Image>
+                                <Image source={backArrow}></Image>
                             </TouchableOpacity>
-                        </ButtonView>
-                    ) : (
-                        <ButtonView>
-                            <Image source={loginDisabled}></Image>
-                        </ButtonView>
-                    )}
+                        </ArrowIcon>
+                        <TopBarText>Entrar</TopBarText>
+
+                        <BatIcon
+                            style={{
+                                transform: [
+                                    { scale: .8 }
+                                ]
+                            }}
+                        >
+                            <TouchableOpacity onPress={() => navigation.navigate('HistoryLevelBatPage')}>
+                                <Image source={Battery}></Image>
+                            </TouchableOpacity>
+                        </BatIcon>
+                    </TopBar>
+                    <InputView>
+                        <LabelText>ID de Usuario</LabelText>
+                        <TextInput
+                            onChangeText={onChangeUserIdInput}
+                            value={userId}
+                            placeholder="id"
+                            keyboardType="default"
+                        />
+                    </InputView>
+
+                    {!disableLogin
+                        ? (
+                            <ButtonView>
+                                <TouchableOpacity
+                                    onPress={hangleCheckUserId}
+                                >
+                                    <Image source={login}></Image>
+                                </TouchableOpacity>
+                            </ButtonView>
+                        ) : (
+                            <ButtonView>
+                                <Image source={loginDisabled}></Image>
+                            </ButtonView>
+                        )}
 
 
 
 
-                <StatusBar style="auto" />
-            </View>
+                    <StatusBar style="auto" />
+                </View>
+            )
+            :(
+                <ActivityIndicatorDiv>
+                    <ActivityIndicator size="large" color="#ffffff"></ActivityIndicator>
+                </ActivityIndicatorDiv>
+            )
+            }
         </Background>
     );
 }

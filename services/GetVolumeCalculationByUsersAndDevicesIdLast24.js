@@ -4,10 +4,10 @@ import NotFound  from './Errors/NotFound';
 import BadRequest  from './Errors/NotFound';
 import Unauthorized  from './Errors/NotFound';
 
-const GetAllDevicesByUserId = async (userId) => {
+const GetVolumeCalculationByUsersAndDevicesIdLast24 = async (deviceId) => {
     try{
         const api = await API();
-        return await api.get(`UserUi/GetAllDevicesByUserId?id=${userId}`);
+        return await api.get(`UserUi/GetVolumeCalculationByUsersAndDevicesIdLast24?id=${deviceId}`);
     }
     catch(err){
         if(err.response){
@@ -28,4 +28,4 @@ const GetAllDevicesByUserId = async (userId) => {
     }
 }
 
-export default GetAllDevicesByUserId
+export default GetVolumeCalculationByUsersAndDevicesIdLast24

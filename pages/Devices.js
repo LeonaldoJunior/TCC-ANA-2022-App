@@ -4,7 +4,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { StyleSheet, Text, View, FlatList, TouchableOpacity, Image, Picker, Alert, ActivityIndicator, TextInput,} from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import styled from 'styled-components';
-import Svg, { Path } from 'react-native-svg';
 import _, { sortedLastIndex } from "lodash"
 import { useFonts } from 'expo-font'
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -50,6 +49,15 @@ const InputView = styled.View`
   width: 100%;
   height: 98px;
   align-items: center;
+`;
+
+const SelectedDevicetView = styled.View`
+  flex-direction: row;
+  justify-content: center;
+  width: 100%;
+  height: 98px;
+  align-items: center;
+  margin-top: 150px;
 `;
 
 const ButtonView = styled.View`
@@ -154,11 +162,15 @@ export function Devices({ navigation }) {
     catch (err) {
       if(err.message === "Request failed with status code 404"){
         handleDeviceListNotFound();
+      }else if(err.message === "Request failed with status code 502"){
+        Alert.alert("Message ", "Desculpe estamos tendo problemas com a conexão, certifique-se que está conectado a internet e tente novamente!");
       }else{
         Alert.alert("Error Message: ", err.message);
       }
       setDevicesListError(err);
     }
+
+
     finally {
       setDevicesListLoading(false);
     }
@@ -176,9 +188,18 @@ export function Devices({ navigation }) {
           navigation.push('Devices');
       }
       catch (err) {
+        if(err.message === "Request failed with status code 404"){
+          Alert.alert("Message: ", "Desculpe nao foi encontrado o dispositivo");
+        }else if(err.message === "Request failed with status code 502"){
+          Alert.alert("Message ", "");
+        }else{
           Alert.alert("Error Message: ", err.message);
-          setDeleteDeviceError(err);
+        }
+        setDeleteDeviceError(err);
       }
+
+
+
       finally {
         setDeleteDeviceLoading(false);
       }
@@ -207,9 +228,17 @@ export function Devices({ navigation }) {
 
       }
       catch (err) {
-        Alert.alert("Error Message: ", err.message);
+        if(err.message === "Request failed with status code 404"){
+          Alert.alert("Message: ", "Desculpe nao foi encontrado o dispositivo");
+        }else if(err.message === "Request failed with status code 502"){
+          Alert.alert("Message ", "Desculpe estamos tendo problemas com a conexão, certifique-se que está conectado a internet e tente novamente!");
+        }else{
+          Alert.alert("Error Message: ", err.message);
+        }
         setSelectedDeviceError(err);
       }
+
+
       finally {
         setSelectedDeviceLoading(false);
       }
@@ -229,6 +258,7 @@ export function Devices({ navigation }) {
       }
     } catch (error) {
       console.log(error);
+      Alert.alert("Erro ",error);
     }
     finally {
       setLoggedUserLoading(false);
@@ -306,14 +336,16 @@ export function Devices({ navigation }) {
         <InputView>
           {!selectedDeviceLoading
           && (
-            <InputView>
+            <SelectedDevicetView>
               <LabelText>
                 Dispositivo selecionado: {selectedDevice.userDevice.waterTankName} {"\n"}
                 Marca: {selectedDevice.waterTank.brand}{"\n"}
                 Volume: {selectedDevice.waterTank.theoVolume} L{"\n"}
-
+                Raio da base: {selectedDevice.waterTank.baseRadius}m{"\n"}
+                Raio do topo: {selectedDevice.waterTank.topRadius}m{"\n"}
+                Altura: {selectedDevice.waterTank.height}m{"\n"}
               </LabelText>
-            </InputView>
+            </SelectedDevicetView>
 
           )
           }
@@ -323,7 +355,7 @@ export function Devices({ navigation }) {
           <TouchableOpacity
             onPress={() => navigation.push('SetNewDevice')}>
             <Image
-              style={{ marginBottom: 20 }}
+              style={{ marginBottom: 5 }}
               source={newDevice}></Image>
           </TouchableOpacity>
           <TouchableOpacity

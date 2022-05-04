@@ -4,7 +4,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { StyleSheet, Text, View, FlatList, TouchableOpacity, Image, Alert, ActivityIndicator } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import styled from 'styled-components';
-import Svg, { Path } from 'react-native-svg';
 import _ from "lodash"
 import Battery from '../assets/battery100.png'
 import backArrow from '../assets/backArrow.png'

@@ -1,18 +1,21 @@
 import { StatusBar } from 'expo-status-bar';
 import React, { useState, useEffect, children } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
-import { StyleSheet, Text, View, FlatList, TouchableOpacity, Image, Picker, TextInput } from 'react-native';
+import { StyleSheet, Text, View, FlatList, TouchableOpacity, Image, Picker, TextInput ,   Alert,
+} from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import styled from 'styled-components';
-import Svg, { Path } from 'react-native-svg';
 import _, { sortedLastIndex } from "lodash"
 import { useFonts } from 'expo-font'
 import AsyncStorage  from '@react-native-async-storage/async-storage';
+
+import PostNewWaterTank from '../services/PostNewWaterTank'
 
 import Battery from '../assets/battery100.png'
 import backArrow from '../assets/backArrow.png'
 import manual from '../assets/manual.png'
 import save from '../assets/save.png'
+import saveDisabled from '../assets/saveDisabled.png'
 
 
 const Background = ({ children }) => {
@@ -79,39 +82,6 @@ const ArrowIcon = styled.View`
   top: 12px;
 `;
 
-// const storeKey = "Devices"
-
-// const storeData = async () => { 
-//   try {
-//     await AsyncStorage.setItem(storeKey, 'java');
-//     await AsyncStorage.setItem(storeKey, 'css');
-//     setflag(true);
-//   } catch (error) {
-//     // Error saving data
-//   }
-// }
-
-// const retrieveData = async () => {
-//   console.log("chamou retrieveData")
-
-//   try {
-//     const value = await AsyncStorage.getItem(storeKey);
-//     if (value !== null) {
-
-//       // We have data!!
-//       console.log(value);
-
-//       return value;
-//     }
-//    } catch (error) {
-//     console.log(error)
-//     return null;
-//      // Error retrieving data  
-//    }
-// }
-
-
-
 export function SetWatertankMeasures( {navigation} ) {
 
   
@@ -120,8 +90,18 @@ export function SetWatertankMeasures( {navigation} ) {
     nunitoBold: require("../assets/fonts/Nunito-Bold.ttf")
   });
   const [selectedDevice ,setSelectedDevice] = useState("");
-  const [deviceId ,setDeviceId] = useState("");
-  const [deviceName ,setDeviceName] = useState("");
+
+  const [waterTankBrand ,setWaterTankBrand] = useState("");
+  const [waterTankBaseRadius ,setWaterTankBaseRadius] = useState("");
+  const [waterTankTopRadius ,setWaterTankTopRadius] = useState("");
+  const [waterTankHeight , setWaterTankHeight] = useState("");
+  const [waterTankTheoVolume , setWaterTankTheoVolume] = useState("");
+
+  const [disableSave , setDisableSave] = useState("");
+
+  const [newWaterTankResponse, setNewWaterTankResponse] = useState({});
+  const [newWaterTankLoading, setNewWaterTankLoading] = useState(true);
+  const [newWaterTankError, setNewWaterTankError] = useState({});
   
  
 //   useEffect(() => {
@@ -137,14 +117,82 @@ export function SetWatertankMeasures( {navigation} ) {
     console.log(selectedDevice)
   }, [selectedDevice])
 
-
-    const onChangeDeviceIdInput = (inputString) => {
-        setDeviceId(inputString);   
+  useEffect(() => {
+    if (
+      waterTankBrand.length > 0 
+      && waterTankBaseRadius.length > 0 
+      && waterTankTopRadius.length > 0 
+      && waterTankHeight.length > 0 
+      && waterTankTheoVolume.length > 0 
+    )
+    {
+      setDisableSave(false);
     }
+    else {
+      setDisableSave(true);
 
-    const onChangeNameInput = (inputString) => {
-        setDeviceName(inputString);   
     }
+  }, [waterTankBrand, waterTankBaseRadius, waterTankTopRadius, waterTankHeight, waterTankTheoVolume])
+
+  const onChangeBrandInput = (e) => {
+    setWaterTankBrand(e);   
+  }
+
+  const onChangeBaseRadiusInput = (e) => {
+    setWaterTankBaseRadius(e);   
+  }
+
+  const onChangeTopRadiusInput = (e) => {
+    setWaterTankTopRadius(e);   
+  }
+
+  const onChangeHeightInput = (e) => {
+    setWaterTankHeight(e);   
+  }
+
+  const onChangeTheoVolumeInput = (e) => {
+    setWaterTankTheoVolume(e);   
+  }
+
+
+  const handlePostNewWaterTank = async () => {
+    try {
+      setNewWaterTankLoading(true);
+      let formData = new FormData();
+      formData.append("waterTankBrand", waterTankBrand);
+      formData.append("waterTankBaseRadius", waterTankBaseRadius);
+      formData.append("waterTankTopRadius", waterTankTopRadius );
+      formData.append("waterTankHeight", waterTankHeight);
+      formData.append("waterTankTheoVolume", waterTankTheoVolume);
+
+      const [newWaterTank] = await Promise.all([
+        PostNewWaterTank(formData)
+      ]);
+
+      setNewWaterTankResponse(newWaterTank.data)
+
+      Keyboard.dismiss()
+      Alert.alert("Sucesso", "Nava caixa registrada")
+
+      navigation.push('Devices');
+
+
+
+    }
+    catch (err) {
+      if(err.message === "Request failed with status code 502"){
+        Alert.alert("Message ", "Desculpe estamos tendo problemas com a conexão, certifique-se que está conectado a internet e tente novamente!");
+      }else{
+        Alert.alert("Error Message: ", err.message);
+      }
+        setNewWaterTankError(err);
+    }
+    
+    finally {
+      setNewWaterTankLoading(false);
+    }
+  }
+
 
   // React.useEffect(console.log("ASDASDASDASD"))
   return (
@@ -173,68 +221,80 @@ export function SetWatertankMeasures( {navigation} ) {
             </BatIcon>
           </TopBar>
 
-          <InputView>
-            <LabelText>ID do dispositivo</LabelText>
-            {/* style={styles.input} */}
-            <TextInput
-                onChangeText={onChangeDeviceIdInput}
-                value={deviceId}
-                placeholder="id"
-                keyboardType="default"
-            />          
-            </InputView>
-
             <InputView>
-            <LabelText>Nome </LabelText>
+            <LabelText>Marca </LabelText>
             {/* style={styles.input} */}
             <TextInput
-                onChangeText={onChangeNameInput}
-                value={deviceId}
+                onChangeText={onChangeBrandInput}
+                value={waterTankBrand}
                 placeholder="nome"
                 keyboardType="default"
-            />          
+            />     
             </InputView>
 
             <InputView>
             <LabelText>Altura da caixa </LabelText>
             {/* style={styles.input} */}
             <TextInput
-                onChangeText={onChangeNameInput}
-                value={deviceId}
-                placeholder="nome"
-                keyboardType="default"
-            />          
+                onChangeText={onChangeHeightInput}
+                value={waterTankHeight}
+                placeholder="metros"
+                keyboardType='numeric'
+                />          
             </InputView>
 
 
             <InputView>
-            <LabelText>Largura da caixa </LabelText>
+            <LabelText>Raio da base</LabelText>
             {/* style={styles.input} */}
             <TextInput
-                onChangeText={onChangeNameInput}
-                value={deviceId}
-                placeholder="nome"
-                keyboardType="default"
-            />          
+                onChangeText={onChangeBaseRadiusInput}
+                value={waterTankBaseRadius}
+                placeholder="metros"
+                keyboardType='numeric'
+                />          
+            </InputView>
+            
+            <InputView>
+            <LabelText>Raio do topo </LabelText>
+            {/* style={styles.input} */}
+            <TextInput
+
+                onChangeText={onChangeTopRadiusInput}
+                value={waterTankTopRadius}
+                placeholder="metros"
+                keyboardType='numeric'
+                />          
             </InputView>
 
             <InputView>
-            <LabelText>Capacidade em litros </LabelText>
+            <LabelText>Volume da caixa </LabelText>
             {/* style={styles.input} */}
             <TextInput
-                onChangeText={onChangeNameInput}
-                value={deviceId}
-                placeholder="nome"
-                keyboardType="default"
-            />          
+                onChangeText={onChangeTheoVolumeInput}
+                value={waterTankTheoVolume}
+                placeholder="metros"
+                keyboardType='numeric'
+                />          
             </InputView>
 
-          <ButtonView>
+
+
+          {!disableSave
+          ? (
+            <ButtonView>
             <TouchableOpacity 
-              onPress={() => navigation.navigate('SetNewDevice')}>
+              onPress={handlePostNewWaterTank}
+            >
               <Image source={save}></Image>                                   
             </TouchableOpacity>
           </ButtonView>
+          ) : (
+            <ButtonView>
+              <Image source={saveDisabled}></Image>
+            </ButtonView>
+          )}
+
 
           <StatusBar style="auto" />
         </View>

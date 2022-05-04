@@ -3,7 +3,6 @@ import React, { Children, useEffect, useState } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Text, View, StyleSheet, Image, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import styled from 'styled-components';
-import Svg, { Path } from 'react-native-svg';
 import backArrow from '../assets/backArrow.png'
 import anaIcon from '../assets/anaIcon.png'
 import { useFonts } from 'expo-font'
@@ -14,6 +13,7 @@ import GetVolumeCalculationByUsersAndDevicesId from '../services/GetVolumeCalcul
 
 import Battery from './Components/Battery';
 
+// #region CSS
 const Background = ({ children }) => {
     return(
         <LinearGradient
@@ -95,11 +95,12 @@ const Buttons = styled.View`
     align-items: center; 
 `;
 
+// #endregion
+
 let interval;
 
-
 export function MyLevelPage( {navigation} ){
-
+    // #region CONST 
     const [levelImage, setLevelImage] = useState(require("../assets/waterTank0.png"));
     const [loggedUser ,setLoggedUser] = useState("");
     const [loggedUserLoading ,setLoggedUserLoading] = useState(true);
@@ -140,87 +141,83 @@ export function MyLevelPage( {navigation} ){
         0:  require("../assets/waterTank0.png")
     }
 
-    // useEffect(()=>{
-    //     console.log("DO USEEFFECT currentVolumeAndBatteryLevel")
-    //     console.log(currentVolumeAndBatteryLevel)
-    // },[currentVolumeAndBatteryLevel])
+    // #endregion
 
+    // #region USEEFFECT
 
-    // useEffect(()=>{
-    //     console.log("DO USEEFFECT selectedDevice")
-    //     console.log(selectedDevice)
-    // },[selectedDevice])
-
-
+    // Toda vez que a tela for aberta irá chamar a função retrieveLoggedUSer
     useEffect(() => {
         const unsubscribe = navigation.addListener('focus', () => {
             retrieveLoggedUser();
         });
         return unsubscribe;
-      }, [navigation]);
+    }, [navigation]);
 
+    // Toda vez que a tela for renderizada irá chamar a função retrieveLoggedUSer
     useEffect(() => {
         retrieveLoggedUser();
     },[])
 
+    
     useEffect(() => {
         if(!loggedUserLoading){
             handleGetSelectedDeviceByUserId();
         }
     }, [loggedUser, loggedUserLoading])
     
-    // useEffect(() => {
-    //     if(selectedDevice != {}){
-    //         handleGetVolumeCalculationByUsersAndDevicesId();
-    //     }
-    // }, [selectedDevice])
-
     useEffect(() => {
-        interval = setInterval(() => {
-            console.log("Com internal MyLevelPage")
-            console.log("selectedDeviceLoading do internal")
-            console.log(selectedDeviceLoading)
-            console.log(selectedDevice)
-            console.log("selectedDevice")
-            if(!selectedDeviceLoading){
-                handleGetVolumeCalculationByUsersAndDevicesId();
+        interval = window.setInterval(async () => {
+
+        if(!selectedDeviceLoading && selectedDevice.userDevice && selectedDevice.userDevice.usersAndDevicesId){
+        console.log("ENTROU DENTRO DO INTERVAL handleGetVolumeCalculationByUsersAndDevicesId")
+            try {
+            setCurrentVolumeAndBatteryLevelLoading(true);
+            const [calculationResp] = await Promise.all([
+                GetVolumeCalculationByUsersAndDevicesId(selectedDevice.userDevice.usersAndDevicesId)
+            ]);
+            setCurrentVolumeAndBatteryLevel(calculationResp.data)
             }
-        }, MINUTE_MS*0.1);
+            catch (err) {
+            if(err.message === "Request failed with status code 404"){
+                handleVolumeNotFound();
+            }else if(err.message === "Request failed with status code 502"){
+                Alert.alert("Message ", "Desculpe estamos tendo problemas com a conexão, certifique-se que está conectado a internet e tente novamente!");
+            }
+            else{
+                Alert.alert("Error Message: ", err.message);
+            }
+            setCurrentVolumeAndBatteryLevelError(err);
+            }
+            finally {
+            setCurrentVolumeAndBatteryLevelLoading(false);
+            }
+        }
 
-        
-      
-        return () => { clearInterval(interval) }; // This represents the unmount function, in which you need to clear your interval to prevent memory leaks.
-      }, [])
-
+        },10000)
+        return ()=> clearInterval(interval)
+    },[selectedDeviceLoading,selectedDevice ])
 
     
     useEffect(() => {
-        console.log("Sem internal")
-
+        
         if(!selectedDeviceLoading){
+            console.log("Sem internal")
             handleGetVolumeCalculationByUsersAndDevicesId();
         }
        
     }, [selectedDevice, selectedDeviceLoading])
 
-
     useEffect(() => {
-        console.log("selectedDevice")
-        console.log(selectedDevice)
-
-       
-    }, [selectedDevice, selectedDeviceLoading])
-
-
-
-    // TODO ATUALIZAR A IMAGEM
-    // if(selectedDevice && selectedDevice.usersAndDevicesId){
-
-    useEffect(() => {
-        if(!currentVolumeAndBatteryLevelLoading && currentVolumeAndBatteryLevel.volumeCalc.currentVolume){
+        if(!currentVolumeAndBatteryLevelLoading){
             let currentVolume = currentVolumeAndBatteryLevel.volumeCalc.currentVolume*1000;
+            console.log("currentVolume")
+            console.log(currentVolume)
             let maxVolume = currentVolumeAndBatteryLevel.waterTank.theoVolume;
+            console.log("maxVolume")
+            console.log(maxVolume)
             let volumePercentage = currentVolume/maxVolume * 100
+            console.log("volumePercentage")
+            console.log(volumePercentage)
             let roundedNumber = Math.floor(volumePercentage/5)*5
             console.log("roundedNumber")
             console.log(roundedNumber)
@@ -228,111 +225,121 @@ export function MyLevelPage( {navigation} ){
         }
     },[currentVolumeAndBatteryLevel, selectedDevice, currentVolumeAndBatteryLevelLoading])
 
+    //#endregion
 
+    // #region FUNCTIONS
 
-    const handleGetSelectedDeviceByUserId = async () => {
-        
-        try {
-        setSelectedDeviceLoading(true);
-        const [selectedDeviceResp] = await Promise.all([
-            GetSelectedDeviceByUserId(loggedUser)
-        ]);
-        setSelectedDevice(selectedDeviceResp.data)
-            
-        }
-        catch (err) {
-        if(err.message === "Request failed with status code 404"){
-            handleDeviceNotSelected();
-        }else{
-            Alert.alert("Error Message: ", err.message);
-        }
-        setSelectedDeviceError(err);
-        }
-        finally {
-        setSelectedDeviceLoading(false);
-        }
-        
-    };
+        const retrieveLoggedUser = async () => {
+            setLoggedUserLoading(true)
 
-    const handleGetVolumeCalculationByUsersAndDevicesId = async () => {
-        
-        if(!selectedDeviceLoading && selectedDevice.userDevice.usersAndDevicesId){
-            console.log("Ta chamando o handleGetVolumeCalculationByUsersAndDevicesId para selectedDevice.usersAndDevicesId: ", selectedDevice.usersAndDevicesId)
             try {
-            setCurrentVolumeAndBatteryLevelLoading(true);
-            const [calculationResp] = await Promise.all([
-                GetVolumeCalculationByUsersAndDevicesId(selectedDevice.userDevice.usersAndDevicesId)
-            ]);
-            setCurrentVolumeAndBatteryLevel(calculationResp.data)
-          }
-          catch (err) {
-            if(err.message === "Request failed with status code 404"){
-                handleVolumeNotFound();
+            const valueString = await AsyncStorage.getItem('@loggedUserId');
+            const value = JSON.parse(valueString);
+
+            if(value !== null){
+                setLoggedUser(value);
             }else{
-              Alert.alert("Error Message: ", err.message);
+                handleUserNotLogged();
+            }          
+            } catch (error) {
+            console.log(error);
+            Alert.alert("Erro ",error)
             }
-            setCurrentVolumeAndBatteryLevelError(err);
-          }
-          finally {
-            setCurrentVolumeAndBatteryLevelLoading(false);
-          }
+            finally{
+                setLoggedUserLoading(false)
+            }
+        };
+
+        const handleGetSelectedDeviceByUserId = async () => {
+            if(loggedUser.length > 0){
+                try {
+                setSelectedDeviceLoading(true);
+                const [selectedDeviceResp] = await Promise.all([
+                    GetSelectedDeviceByUserId(loggedUser)
+                ]);
+                setSelectedDevice(selectedDeviceResp.data)
+                    
+                }
+                catch (err) {
+                    if(err.message === "Request failed with status code 404"){
+                        handleDeviceNotSelected();
+                    }else if(err.message === "Request failed with status code 502"){
+                        Alert.alert("Message ", "Desculpe estamos tendo problemas com a conexão, certifique-se que está conectado a internet e tente novamente!");
+                    }
+                    else{
+                        Alert.alert("Error Message: ", err.message);
+                    }
+                    setSelectedDeviceError(err);
+                }   
+                finally {
+                setSelectedDeviceLoading(false);
+                }
+            }
+        };
+        const handleGetVolumeCalculationByUsersAndDevicesId = async () => {
+            if(!selectedDeviceLoading && selectedDevice.userDevice && selectedDevice.userDevice.usersAndDevicesId){
+            console.log("ENTROU FORA INTERVAL handleGetVolumeCalculationByUsersAndDevicesId")
+                try {
+                setCurrentVolumeAndBatteryLevelLoading(true);
+                const [calculationResp] = await Promise.all([
+                    GetVolumeCalculationByUsersAndDevicesId(selectedDevice.userDevice.usersAndDevicesId)
+                ]);
+                setCurrentVolumeAndBatteryLevel(calculationResp.data)
+            }
+            catch (err) {
+                if(err.message === "Request failed with status code 404"){
+                    handleVolumeNotFound();
+                }else if(err.message === "Request failed with status code 502"){
+                    Alert.alert("Message ", "Desculpe estamos tendo problemas com a conexão tente mais tarde!");
+                }            
+                else{
+                Alert.alert("Error Message: ", err.message);
+                }
+                setCurrentVolumeAndBatteryLevelError(err);
+            }
+            finally {
+                setCurrentVolumeAndBatteryLevelLoading(false);
+            }
+            }
+        };
+
+        const handleVolumeNotFound = () => {
+            Alert.alert("Error Message: ", "O dispositivo ainda nao realizou nenhuma leitura por favor aguarde (1h)");
         }
-    };
-
-    const handleVolumeNotFound = () => {
-        Alert.alert("Error Message: ", "O dispositivo ainda nao realizou nenhuma leitura por favor aguarde (1h)");
-    }
-  
-    const retrieveLoggedUser = async () => {
-        setLoggedUserLoading(true)
-
-        try {
-          const valueString = await AsyncStorage.getItem('@loggedUserId');
-          const value = JSON.parse(valueString);
-
-          if(value !== null){
-            setLoggedUser(value);
-          }else{
-            handleUserNotLogged();
-          }          
-        } catch (error) {
-          console.log(error);
+    
+        const handleUserNotLogged = () => {
+            Alert.alert("Usuario nao registrado", `Por favor insira o usuário ID`);
+            window.clearInterval(interval)
+            navigation.push('Login');
+            // setTimeout(() => {navigation.navigate('SetNewDevice')}, 2000);      
         }
-        finally{
-            setLoggedUserLoading(false)
+
+        const handleDeviceNotSelected = () => {
+            Alert.alert("Nenhum dispositivo selecionado", `Por favor, selecione um dispositivo`);
+            window.clearInterval(interval)
+            navigation.push('Devices');
         }
-    };
 
-    const handleUserNotLogged = () => {
-        Alert.alert("Usuario nao registrado", `Por favor insira o usuário ID`);
-        window.clearInterval(interval)
-        navigation.push('Login');
-        // setTimeout(() => {navigation.navigate('SetNewDevice')}, 2000);      
-    }
+        const formatDate = (dateString) => {
+            let readDate = new Date(dateString)
+            var month   = readDate.getUTCMonth() + 1; //months from 1-12
+            var day     = readDate.getUTCDate();
+            var year    = readDate.getUTCFullYear();
+            
+            var seconds = readDate.getSeconds();
+            var minutes = readDate.getMinutes();
+            var hour = readDate.getHours();
 
-    const handleDeviceNotSelected = () => {
-        Alert.alert("Nenhum dispositivo selecionado", `Por favor, selecione um dispositivo`);
-        window.clearInterval(interval)
-        navigation.push('Devices');
-    }
+            return `${('0' + day).slice(-2)}/${('0' + month).slice(-2)}/${year} ${('0' + hour).slice(-2)}:${('0' + minutes).slice(-2)}:${('0' + seconds).slice(-2)}`;
+        } 
+            
+        const [loaded] = useFonts({
+            nunitoLight: require("../assets/fonts/Nunito-Light.ttf"),
+            nunitoBold: require("../assets/fonts/Nunito-Bold.ttf")
+        });
 
-    const formatDate = (dateString) => {
-        let readDate = new Date(dateString)
-        var month   = readDate.getUTCMonth() + 1; //months from 1-12
-        var day     = readDate.getUTCDate();
-        var year    = readDate.getUTCFullYear();
-        
-        var seconds = readDate.getSeconds();
-        var minutes = readDate.getMinutes();
-        var hour = readDate.getHours();
+    // #endregion
 
-        return `${('0' + day).slice(-2)}/${('0' + month).slice(-2)}/${year} ${('0' + hour).slice(-2)}:${('0' + minutes).slice(-2)}:${('0' + seconds).slice(-2)}`;
-    } 
-        
-    const [loaded] = useFonts({
-        nunitoLight: require("../assets/fonts/Nunito-Light.ttf"),
-        nunitoBold: require("../assets/fonts/Nunito-Bold.ttf")
-    });
 
     if(!loaded){
     return null  
@@ -371,7 +378,7 @@ export function MyLevelPage( {navigation} ){
             </TopBar>
 
 
-            { !currentVolumeAndBatteryLevelLoading && currentVolumeAndBatteryLevel.volumeCalc.currentVolume 
+            { !currentVolumeAndBatteryLevelLoading 
                 ?(
                     <LevelText>
                         {selectedDevice.userDevice.waterTankName}
@@ -391,7 +398,7 @@ export function MyLevelPage( {navigation} ){
             }
 
             <WaterTank>
-                {!currentVolumeAndBatteryLevelLoading && currentVolumeAndBatteryLevel.volumeCalc.currentVolume 
+                {!currentVolumeAndBatteryLevelLoading 
                     ?(
                         <Image source={levelImage}/>                    
                     )

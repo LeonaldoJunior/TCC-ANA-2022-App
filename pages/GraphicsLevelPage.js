@@ -9,10 +9,26 @@ import Battery from '../assets/battery100.png'
 import backArrow from '../assets/backArrow.png'
 import { useFonts } from 'expo-font'
 import AsyncStorage  from '@react-native-async-storage/async-storage';
-import { LineChart,AreaChart, YAxis,XAxis, Grid, Decorator } from 'react-native-svg-charts'
-import * as shape from 'd3-shape'
 
-import GetVolumeCalculationByUsersAndDevicesIdListFilterDay from '../services/GetVolumeCalculationByUsersAndDevicesIdListFilterDay'
+
+
+import { Dimensions } from "react-native";
+import {
+  LineChart,
+  BarChart,
+  PieChart,
+  ProgressChart,
+  ContributionGraph,
+  StackedBarChart
+} from "react-native-chart-kit";
+
+
+
+
+import * as shape from 'd3-shape'
+import { compareAsc, format } from 'date-fns'
+
+import GetVolumeCalculationByUsersAndDevicesIdLast24 from '../services/GetVolumeCalculationByUsersAndDevicesIdLast24'
 import GetSelectedDeviceByUserId from '../services/GetSelectedDeviceByUserId'
 
 
@@ -80,6 +96,8 @@ const InputView = styled.View`
   height: 98px;
   align-items: center;
 `;
+const GraphView = styled.View`
+`;
 
 const LabelText = styled.Text`
   font-style: normal;
@@ -103,11 +121,15 @@ export function GraphicsLevelPage( {navigation} ) {
   const [selectedDeviceLoading, setSelectedDeviceLoading] = useState(true);
   const [selectedDeviceError, setSelectedDeviceError] = useState({});
 
-  const [currentVolumeAndBatteryLevel ,setCurrentVolumeAndBatteryLevel] = useState({});
-  const [currentVolumeAndBatteryLevelLoading, setCurrentVolumeAndBatteryLevelLoading] = useState(true);
-  const [currentVolumeAndBatteryLevelError, setCurrentVolumeAndBatteryLevelError] = useState({});
+  const [listVolumeAndBatteryLevel ,setListVolumeAndBatteryLevel] = useState({});
+  const [listVolumeAndBatteryLevelLoading, setListVolumeAndBatteryLevelLoading] = useState(true);
+  const [listVolumeAndBatteryLevelError, setListVolumeAndBatteryLevelError] = useState({});
 
-  const [logs, setLogs] = useState({});
+  const [dataLabels ,setDataLabels] = useState([]);
+
+  
+
+  const [logs, setLogs] = useState([]);
   
 
   const MINUTE_MS = 60000;
@@ -122,102 +144,6 @@ export function GraphicsLevelPage( {navigation} ) {
     { value: '360', label: '360 dias' }
   ]
 
-  // const data = [ 50, 10, 40, 95, -4, -24, 85, 91, 35, 53, -53, 23 ]
-  const xAxesSvg = {
-    fontSize: 10,
-    fill: "black",
-    rotation: 70,
-    originY: 15,
-    y: 10,
-  };
-  const yAxesSvg = { fontSize: 12, fill: "black", marginLeft: 20 };
-  const gridSvg = { left: 10,  fill: "black" };
-
-  const verticalContentInset = { left: 0, right: 10, top: 10, bottom: 1 };
-  const xAxisHeight = 50;
-
-  const data=[ 
-    { xValue: 0, yValue: 0},
-    { xValue: 1, yValue: 1},
-    { xValue: 2, yValue: 2},
-    { xValue: 3, yValue: 3},
-    { xValue: 4, yValue: 4},
-    { xValue: 5, yValue: 5},
-    { xValue: 6, yValue: 6},
-    { xValue: 7, yValue: 7},
-    { xValue: 8, yValue: 8},
-    { xValue: 9, yValue: 9},
-    { xValue: 10, yValue: 10},
-    { xValue: 11, yValue: 11},
-    { xValue: 12, yValue: 12},
-    { xValue: 13, yValue: 13},
-    { xValue: 14, yValue: 14},
-    { xValue: 15, yValue: 15},
-    { xValue: 16, yValue: 16},
-    { xValue: 17, yValue: 17},
-    { xValue: 18, yValue: 18},
-    { xValue: 19, yValue: 19},
-    { xValue: 20, yValue: 20},
-    { xValue: 21, yValue: 21},
-    { xValue: 22, yValue: 22},
-    { xValue: 23, yValue: 23},
-    { xValue: 24, yValue: 24},
-  ]
-  var xAxisData = [ 
-    { xValue: 1},
-    { xValue: 2},
-    { xValue: 3},
-    { xValue: 4},
-    { xValue: 5},
-    { xValue: 6},
-    { xValue: 7},
-    { xValue: 8},
-    { xValue: 9},
-    { xValue: 10},
-    { xValue: 11},
-    { xValue: 12},
-    { xValue: 13},
-    { xValue: 14},
-    { xValue: 15},
-    { xValue: 16},
-    { xValue: 17},
-    { xValue: 18},
-    { xValue: 19},
-    { xValue: 20},
-    { xValue: 21},
-    { xValue: 22},
-    { xValue: 23},
-    { xValue: 24},
-  ]
-
-  var yAxisData = [ 
-    { yValue: 0},
-    { yValue: 1},
-    { yValue: 2},
-    { yValue: 3},
-    { yalue: 4},
-    { yValue: 5},
-    { yValue: 6},
-    { yalue: 7},
-    { yalue: 8},
-    { yValue: 9},
-    { yValue: 10},
-    { yValue: 11},
-    { yValue: 12},
-    { yValue: 13},
-    { yValue: 14},
-    { yValue: 15},
-    { yValue: 16},
-    { yValue: 17},
-    { yValue: 18},
-    { yValue: 19},
-    { yValue: 20},
-    { yValue: 21},
-    { yValue: 22},
-    { yValue: 23},
-    { yValue: 24}
-  ]
-    
   const optionsList = (
     // devicesList.map((s, i) => { return <Picker.Item key={i} value={s} label={s.userDevice.waterTankName} /> })
     options.map((s, i) => { return <Picker.Item key={i} value={s.value} label={s.label} /> })
@@ -234,6 +160,9 @@ export function GraphicsLevelPage( {navigation} ) {
       retrieveLoggedUser();
   },[])
 
+    useEffect(() => {
+      console.log(logs)
+  },[logs])
 
   useEffect(() => {
     if(!loggedUserLoading){
@@ -242,45 +171,16 @@ export function GraphicsLevelPage( {navigation} ) {
   }, [loggedUser, loggedUserLoading])
 
 
-  // useEffect(() => {
-  //   const interval = setInterval(() => {
-  //     console.log("Com internal GraphicsLevelPage")
-
-  //     if(!selectedDeviceLoading){
-  //       handleGetVolumeCalculationByUsersAndDevicesIdByDay();
-  //     }
-  //     else
-  //     { 
-  //         console.log ("selectedDevice != {},    device not selected")
-  //     }
-  //   }, MINUTE_MS);
-  
-  //   return () => clearInterval(interval); // This represents the unmount function, in which you need to clear your interval to prevent memory leaks.
-  // }, [])
-
-  // useEffect(() => {
-  //   console.log("Sem internal")
-  //   if(!selectedDeviceLoading){
-  //     handleGetVolumeCalculationByUsersAndDevicesIdByDay();
-  //   } 
-  // }, [selectedDevice, selectedDeviceLoading])
-
-  // useEffect(()=>{
-  //   console.log("currentVolumeAndBatteryLevel")
-  //   console.log(currentVolumeAndBatteryLevel)
-  // },[currentVolumeAndBatteryLevel])
-
-  // useEffect(()=>{
-  //   console.log("logs")
-  //   console.log(logs)
-  // },[logs])
-
-
   useEffect(()=>{
-    // const [logs, setLogs] = useState({});
-    if(!currentVolumeAndBatteryLevelLoading){
+    handleGetVolumeCalculationByUsersAndDevicesIdLast24()
+  },[selectedDevice,selectedDeviceLoading])
+ 
+  useEffect(()=>{
+    if(!listVolumeAndBatteryLevelLoading){
+      console.log("listVolumeAndBatteryLevel")
+      console.log(listVolumeAndBatteryLevel)
       setLogs(
-        currentVolumeAndBatteryLevel.map((elm)=>{
+        listVolumeAndBatteryLevel.map((elm)=>{
           return {
           "VolumePercentage" : calcVolumePercentage(elm),
           "VolumeLiters": elm.volumeCalc.currentVolume*1000,
@@ -291,7 +191,8 @@ export function GraphicsLevelPage( {navigation} ) {
       )
     }
 
-  },[currentVolumeAndBatteryLevel, currentVolumeAndBatteryLevelLoading])
+  },[listVolumeAndBatteryLevel, listVolumeAndBatteryLevelLoading])
+
   
   const handleGetSelectedDeviceByUserId = async () => {
         
@@ -337,29 +238,37 @@ export function GraphicsLevelPage( {navigation} ) {
     }
 };
 
-const handleGetVolumeCalculationByUsersAndDevicesIdByDay = async (lastDays) => {
+const handleGetVolumeCalculationByUsersAndDevicesIdLast24 = async () => {
 
-    setCurrentVolumeAndBatteryLevelLoading(true);
+    setListVolumeAndBatteryLevelLoading(true);
 
     if(!selectedDeviceLoading && selectedDevice.userDevice.usersAndDevicesId){
     // console.log("Ta chamando o handleGetVolumeCalculationByUsersAndDevicesId para selectedDevice.usersAndDevicesId: ", selectedDevice.usersAndDevicesId)
 
     try {
         const [calculationResp] = await Promise.all([
-          GetVolumeCalculationByUsersAndDevicesIdListFilterDay(selectedDevice.userDevice.usersAndDevicesId, lastDays)
+          GetVolumeCalculationByUsersAndDevicesIdLast24(selectedDevice.userDevice.usersAndDevicesId)
         ]);
-        setCurrentVolumeAndBatteryLevel(calculationResp.data)
+        setListVolumeAndBatteryLevel(calculationResp.data)
+
+
       }
       catch (err) {
         if(err.message === "Request failed with status code 404"){
             handleVolumeNotFound();
+          console.log(err);
+
         }else{
           Alert.alert("Error Message: ", err.message);
+        console.log(err);
+
         }
-        setCurrentVolumeAndBatteryLevelError(err);
+        setListVolumeAndBatteryLevelError(err);
+        console.log(err);
+
       }
       finally {
-        setCurrentVolumeAndBatteryLevelLoading(false);
+        setListVolumeAndBatteryLevelLoading(false);
       }
     }
 };
@@ -388,15 +297,22 @@ const handleUserNotLogged = () => {
       const [ direction, setDirection ] = useState(null)
       const [ selectedColumn, setSelectedColumn ] = useState(null)
 
+      // full date
+      // const formatDate = (date) =>{
+      //   let yyyy = date.substring(0,4);
+      //   let mm    = date.substring(5,7);
+      //   let dd    = date.substring(8,10);
+      //   return `${dd}/${mm}/${yyyy}`;
+      // }
+
       const formatDate = (date) =>{
-        let yyyy = date.substring(0,4);
         let mm    = date.substring(5,7);
         let dd    = date.substring(8,10);
-        return `${dd}/${mm}/${yyyy}`;
+        return `${dd}/${mm} `;
       }
 
       const formatHour = (date) =>{
-        return date.substring(11,19);
+        return date.substring(11,16);
       }
 
       const calcVolumePercentage = (data) =>{
@@ -415,7 +331,6 @@ const handleUserNotLogged = () => {
 
   return (
       <Background>
-        <View>
           <TopBar>
             <ArrowIcon>
                 <TouchableOpacity
@@ -440,7 +355,7 @@ const handleUserNotLogged = () => {
               </TouchableOpacity>
             </BatIcon>
           </TopBar>            
-          {true 
+          {/* {true 
             ? (
             
               <InputView>
@@ -462,66 +377,81 @@ const handleUserNotLogged = () => {
                   <ActivityIndicator size="large" color="#0000ff"></ActivityIndicator>
               </ActivityIndicatorDiv>
             )
+          } */}
+
+          <LabelText>Ultimas 24 leituras</LabelText>
+          { logs.length > 0 ?  (
+            <GraphView>
+              <LineChart
+                
+                bezier
+                data={{
+                  labels: logs.map((item)=>item.Hour),
+                  // labels: logs.map((item)=>item.Date + item.Hour),
+                  datasets: [
+                    {
+                      data: logs.map((item)=>item.VolumeLiters)
+                    }
+                    
+                  ],
+                  legend: ["Nível"] // optional
+
+                }}
+                width={Dimensions.get("window").width*0.97}
+                height={400}
+                yAxisLabel=""
+                yAxisSuffix="L"
+                segments={10}
+                fromZero
+                yAxisInterval={1} // optional, defaults to 1
+                verticalLabelRotation={80}
+                chartConfig={{
+                  backgroundColor: "#0079e2",
+                  backgroundGradientFrom: "#0079e2",
+                  backgroundGradientTo: "#0079e2",
+                  decimalPlaces: 0, // optional, defaults to 2dp
+                  color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+                  labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+                  style: {
+                    borderRadius: 16
+                  },
+                  propsForDots: {
+                    r: "2",
+                    strokeWidth: "1",
+                    stroke: "#fff"
+                  },
+                  propsForBackgroundLines: {
+                    strokeDasharray: "1" // solid background lines with no dashes
+                  },
+                  propsForLabels:{
+                    color:'#000',
+                    fontSize: 11,
+
+                  },
+                  
+                }}
+
+                style={{
+                  borderRadius: 10,
+                  paddingTop: 5,
+                  paddingLeft: 10,
+                  paddingRight: 40,
+                }}
+              />
+            </GraphView>
+          )
+          :(
+            <ActivityIndicatorDiv>
+                <ActivityIndicator size="large" color="#0000ff"></ActivityIndicator>
+            </ActivityIndicatorDiv>
+          )
+
           }
 
-          <View
-            style={{
-              paddingRight: 10,
-              height: 400,
-              padding: 0,
-              flexDirection: "row"
-            }}
-          >
-            <YAxis
-              data={yAxisData}
-              yAccessor={({ item }) => item.yValue}
-              style={{ marginBottom: xAxisHeight }}
-              contentInset={verticalContentInset}
-              svg={yAxesSvg}
-              formatLabel={value => value + " "}
-            />
-            <View style={{ flex: 1, marginLeft: 10 }}>
-              <LineChart
-                  style={{ flex: 1, marginLeft: 16 }}
-
-                  data={data}
-                  yAccessor={({ item }) => item.yValue}
-                  xAccessor={({ item }) => item.xValue}
-                  svg={{ stroke: 'rgb(134, 65, 244)' }}
-                  numberOfTicks={24}
-                  contentInset={verticalContentInset}
-
-
-                  // xScale={scale.scaleTime}
-                  // svg={{ stroke: "rgb(134, 65, 244)" }}
-
-                  spacing={0.2}
-                  gridMin={0}
-
-              >
-                <Grid />
-                <Grid 
-                  direction={Grid.Direction.VERTICAL}
-                  />
-              </LineChart>
-              <XAxis
-                style={{ marginHorizontal: -10, height: xAxisHeight }}
-                data={xAxisData}
-                xAccessor={({ item }) => item.xValue}
-                contentInset={{ left: 30, right: 10, top: -100, bottom: -100}}
-                formatLabel={value => value + "11:00"}
-
-                svg={xAxesSvg}
-              />
-            </View>
-          </View>
 
 
 
 
-
-
-        </View>
       </Background>
   );
 }

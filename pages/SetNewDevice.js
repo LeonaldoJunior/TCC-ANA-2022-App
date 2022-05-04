@@ -16,14 +16,13 @@ import {
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import styled from 'styled-components';
-import Svg, { Path } from 'react-native-svg';
 import _, { sortedLastIndex } from "lodash"
 import { useFonts } from 'expo-font'
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import Battery from '../assets/battery100.png'
 import backArrow from '../assets/backArrow.png'
-import manual from '../assets/manual.png'
+import newWaterTank from '../assets/newWaterTank.png'
 import save from '../assets/save.png'
 import saveDisabled from '../assets/saveDisabled.png'
 
@@ -59,13 +58,13 @@ const InputView = styled.View`
   flex-direction: row;
   justify-content: center;
   width: 100%;
-  height: 98px;
+  height: 80px;
   align-items: center;
 `;
 
 const ButtonView = styled.View`
-  top: 30px;
-  margin: 10px;
+  top: 60px;
+  margin-bottom: 5px;
 `
 
 const LabelText = styled.Text`
@@ -95,6 +94,14 @@ const ArrowIcon = styled.View`
   top: 12px;
 `;
 
+const SelectedDevicetView = styled.View`
+  flex-direction: row;
+  justify-content: center;
+  width: 100%;
+  height: 98px;
+  align-items: center;
+  margin-top: 80px;
+`;
 
 export function SetNewDevice({ navigation }) {
 
@@ -103,7 +110,7 @@ export function SetNewDevice({ navigation }) {
     nunitoLight: require("../assets/fonts/Nunito-Light.ttf"),
     nunitoBold: require("../assets/fonts/Nunito-Bold.ttf")
   });
-  const [selectedWaterTank, setSelectedWaterTank] = useState("");
+  const [selectedWaterTank, setSelectedWaterTank] = useState({});
   const [deviceId, setDeviceId] = useState("");
   const [waterTankName, setWaterTankName] = useState("");
 
@@ -135,9 +142,17 @@ export function SetNewDevice({ navigation }) {
       setListWaterTankList(waterTank.data)
     }
     catch (err) {
-      Alert.alert("Error Message: ", err.message);
+      if(err.message === "Request failed with status code 404"){
+        Alert.alert("Message: ", "Desculpe não foi encontrado nenhuma caixa D'água");
+      }else if(err.message === "Request failed with status code 502"){
+        Alert.alert("Message ", "Desculpe estamos tendo problemas com a conexão, certifique-se que está conectado a internet e tente novamente!");
+      }else{
+        Alert.alert("Error Message: ", err.message);
+      }
       setListWaterTankError(err);
     }
+
+
     finally {
       setListWaterTankLoading(false);
     }
@@ -172,6 +187,8 @@ export function SetNewDevice({ navigation }) {
       }
       if(err.message === "Request failed with status code 404"){
         Alert.alert("Error Message: ", "Dispositivo não encontrado, certifique-se que digitou corretamente o ID, tente novamente");
+      }else if(err.message === "Request failed with status code 502"){
+        Alert.alert("Message ", "Desculpe estamos tendo problemas com a conexão, certifique-se que está conectado a internet e tente novamente!");
       }
       else{
         Alert.alert("Error Message: ", err.message);
@@ -183,10 +200,6 @@ export function SetNewDevice({ navigation }) {
     }
   }
 
-  // useEffect(() => {
-  //   console.log(selectedWaterTank)
-  // }, [selectedWaterTank])
-
   useEffect(() => {
     if (waterTankName.length > 0 && deviceId.length > 0 && selectedWaterTank) {
       setDisableSave(false);
@@ -197,6 +210,11 @@ export function SetNewDevice({ navigation }) {
     }
   }, [waterTankName, deviceId, selectedWaterTank])
 
+
+  useEffect(()=>{
+    console.log("selectedWaterTank haha")
+    console.log(selectedWaterTank)
+  },[selectedWaterTank])
 
 
   const onChangeDeviceIdInput = (inputString) => {
@@ -217,10 +235,9 @@ export function SetNewDevice({ navigation }) {
       } else {
         handleUserNotLogged();
       }
-
-
     } catch (error) {
       console.log(error);
+      Alert.alert("Erro ",error)
     }
   };
 
@@ -293,7 +310,6 @@ export function SetNewDevice({ navigation }) {
                 onValueChange={(itemValue, itemIndex) => setSelectedWaterTank(itemValue)}
                 mode={"dropdown"}
               >
-                <Picker.Item label="" value="" />
                 {showWaterTankOptions}
               </Picker>
             </InputView>
@@ -303,11 +319,28 @@ export function SetNewDevice({ navigation }) {
           )
         }
 
+        <InputView>
+          {selectedWaterTank && selectedWaterTank.waterTankId
+          && (
+            <SelectedDevicetView>
+              <LabelText>
+                Marca: {selectedWaterTank.brand}{"\n"}
+                Volume: {selectedWaterTank.theoVolume} L{"\n"}
+                Raio da base: {selectedWaterTank.baseRadius}m{"\n"}
+                Raio do topo: {selectedWaterTank.topRadius}m{"\n"}
+                Altura: {selectedWaterTank.height}m{"\n"}
+              </LabelText>
+            </SelectedDevicetView>
+
+          )
+          }
+        </InputView>
+
 
         <ButtonView>
           <TouchableOpacity
             onPress={() => navigation.push('SetWatertankMeasures')}>
-            <Image source={manual}></Image>
+            <Image source={newWaterTank}></Image>
           </TouchableOpacity>
         </ButtonView>
 
