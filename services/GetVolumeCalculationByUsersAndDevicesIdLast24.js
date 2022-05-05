@@ -4,11 +4,12 @@ import NotFound  from './Errors/NotFound';
 import BadRequest  from './Errors/NotFound';
 import Unauthorized  from './Errors/NotFound';
 
-const GetVolumeCalculationByUsersAndDevicesIdLast24 = async (deviceId) => {
+const GetVolumeCalculationByUsersAndDevicesIdLast24 = async (deviceId, date) => {
     try{
         const api = await API();
-        return await api.get(`UserUi/GetVolumeCalculationByUsersAndDevicesIdLast24?id=${deviceId}`);
+        return await api.get(`UserUi/GetVolumeCalculationByUsersAndDevicesIdAndDate?id=${deviceId}&date=${date}`);
     }
+    
     catch(err){
         if(err.response){
             if(err.response === httpsStatus.InternalServerError){

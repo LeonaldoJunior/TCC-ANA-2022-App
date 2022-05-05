@@ -1,7 +1,7 @@
 import { StatusBar } from 'expo-status-bar';
 import React, { useState, useEffect, children } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
-import { StyleSheet, Text, View, FlatList, TouchableOpacity, Image, Alert, ActivityIndicator, Picker } from 'react-native';
+import { StyleSheet, Text, View, FlatList, TouchableOpacity, Image, Alert, ActivityIndicator, Picker, Button, TextInput } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import styled from 'styled-components';
 import _ from "lodash"
@@ -10,7 +10,7 @@ import backArrow from '../assets/backArrow.png'
 import { useFonts } from 'expo-font'
 import AsyncStorage  from '@react-native-async-storage/async-storage';
 
-
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 import { Dimensions } from "react-native";
 import {
@@ -30,6 +30,8 @@ import { compareAsc, format } from 'date-fns'
 
 import GetVolumeCalculationByUsersAndDevicesIdLast24 from '../services/GetVolumeCalculationByUsersAndDevicesIdLast24'
 import GetSelectedDeviceByUserId from '../services/GetSelectedDeviceByUserId'
+
+import DatePickerIcon from '../assets/datePicker.png'
 
 
 
@@ -127,9 +129,12 @@ export function GraphicsLevelPage( {navigation} ) {
 
   const [dataLabels ,setDataLabels] = useState([]);
 
-  
-
   const [logs, setLogs] = useState([]);
+
+  const [date, setDate] = useState(new Date());
+  const [mode, setMode] = useState('date');
+  const [show, setShow] = useState(false);
+
   
 
   const MINUTE_MS = 60000;
@@ -247,7 +252,7 @@ const handleGetVolumeCalculationByUsersAndDevicesIdLast24 = async () => {
 
     try {
         const [calculationResp] = await Promise.all([
-          GetVolumeCalculationByUsersAndDevicesIdLast24(selectedDevice.userDevice.usersAndDevicesId)
+          GetVolumeCalculationByUsersAndDevicesIdLast24(selectedDevice.userDevice.usersAndDevicesId, formatDatePicker(date))
         ]);
         setListVolumeAndBatteryLevel(calculationResp.data)
 
@@ -287,6 +292,25 @@ const handleUserNotLogged = () => {
   // setTimeout(() => {navigation.push('SetNewDevice')}, 2000);      
 }
 
+const onChange = (event, selectedDate) => {
+  let currentDate = selectedDate;
+  if(!selectedDate){
+    currentDate = new Date();
+  }
+  
+  setShow(false);
+  setDate(currentDate);
+  
+};
+
+const showMode = (currentMode) => {
+  setShow(true);
+  setMode(currentMode);
+};
+
+const showDatepicker = () => {
+  showMode('date');
+};
 
     const [ columns, setColumns ] = useState([
         "Volume(%)",
@@ -310,6 +334,16 @@ const handleUserNotLogged = () => {
         let dd    = date.substring(8,10);
         return `${dd}/${mm} `;
       }
+
+      const formatDatePicker = (date) => {
+        let dateFormatted = ((date.getDate() )) + "/" + ((date.getMonth() + 1)) + "/" + date.getFullYear(); 
+        console.log(dateFormatted);
+        return dateFormatted
+      }
+
+
+
+
 
       const formatHour = (date) =>{
         return date.substring(11,16);
@@ -379,7 +413,24 @@ const handleUserNotLogged = () => {
             )
           } */}
 
-          <LabelText>Ultimas 24 leituras</LabelText>
+          <TouchableOpacity onPress={showDatepicker}>
+            <Image source={DatePickerIcon}></Image>
+          </TouchableOpacity>
+
+
+            
+          <LabelText>Data Selecionada: {formatDatePicker(date)}</LabelText>
+          {show && (
+            <DateTimePicker
+            testID="dateTimePicker"
+            value={date}
+            mode={mode}
+            is24Hour={true}
+            onChange={onChange}
+            />
+          )}
+
+
           { logs.length > 0 ?  (
             <GraphView>
               <LineChart
