@@ -178,8 +178,6 @@ export function Login({ navigation }) {
     return null  
     }
 
-
-    // React.useEffect(console.log("ASDASDASDASD"))
     return (
         <Background>
             {!userIdResponseLoading 

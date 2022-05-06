@@ -169,7 +169,6 @@ export function MyLevelPage( {navigation} ){
         interval = window.setInterval(async () => {
 
         if(!selectedDeviceLoading && selectedDevice.userDevice && selectedDevice.userDevice.usersAndDevicesId){
-        console.log("ENTROU DENTRO DO INTERVAL handleGetVolumeCalculationByUsersAndDevicesId")
             try {
             setCurrentVolumeAndBatteryLevelLoading(true);
             const [calculationResp] = await Promise.all([
@@ -201,7 +200,6 @@ export function MyLevelPage( {navigation} ){
     useEffect(() => {
         
         if(!selectedDeviceLoading){
-            console.log("Sem internal")
             handleGetVolumeCalculationByUsersAndDevicesId();
         }
        
@@ -210,17 +208,9 @@ export function MyLevelPage( {navigation} ){
     useEffect(() => {
         if(!currentVolumeAndBatteryLevelLoading){
             let currentVolume = currentVolumeAndBatteryLevel.volumeCalc.currentVolume*1000;
-            console.log("currentVolume")
-            console.log(currentVolume)
             let maxVolume = currentVolumeAndBatteryLevel.waterTank.theoVolume;
-            console.log("maxVolume")
-            console.log(maxVolume)
             let volumePercentage = currentVolume/maxVolume * 100
-            console.log("volumePercentage")
-            console.log(volumePercentage)
             let roundedNumber = Math.floor(volumePercentage/5)*5
-            console.log("roundedNumber")
-            console.log(roundedNumber)
             setLevelImage(images[roundedNumber])
         }
     },[currentVolumeAndBatteryLevel, selectedDevice, currentVolumeAndBatteryLevelLoading])
@@ -278,7 +268,6 @@ export function MyLevelPage( {navigation} ){
         };
         const handleGetVolumeCalculationByUsersAndDevicesId = async () => {
             if(!selectedDeviceLoading && selectedDevice.userDevice && selectedDevice.userDevice.usersAndDevicesId){
-            console.log("ENTROU FORA INTERVAL handleGetVolumeCalculationByUsersAndDevicesId")
                 try {
                 setCurrentVolumeAndBatteryLevelLoading(true);
                 const [calculationResp] = await Promise.all([

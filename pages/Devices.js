@@ -284,8 +284,6 @@ export function Devices({ navigation }) {
     return null
   }
 
-
-  // React.useEffect(console.log("ASDASDASDASD"))
   return (
     <Background>
       <View style={styles.container}>

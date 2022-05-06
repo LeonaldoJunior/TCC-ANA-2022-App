@@ -103,20 +103,6 @@ export function SetWatertankMeasures( {navigation} ) {
   const [newWaterTankLoading, setNewWaterTankLoading] = useState(true);
   const [newWaterTankError, setNewWaterTankError] = useState({});
   
- 
-//   useEffect(() => {
-//     storeData()
-//  }, [])
-
-//   useEffect(() => {
-//     setSelectedDevice(retrieveData());
-//   }, [])
-
-
-  useEffect(() => {
-    console.log(selectedDevice)
-  }, [selectedDevice])
-
   useEffect(() => {
     if (
       waterTankBrand.length > 0 
@@ -193,8 +179,6 @@ export function SetWatertankMeasures( {navigation} ) {
     }
   }
 
-
-  // React.useEffect(console.log("ASDASDASDASD"))
   return (
       <Background>
         <View style={styles.container}>

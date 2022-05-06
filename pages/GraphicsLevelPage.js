@@ -28,7 +28,7 @@ import {
 import * as shape from 'd3-shape'
 import { compareAsc, format } from 'date-fns'
 
-import GetVolumeCalculationByUsersAndDevicesIdLast24 from '../services/GetVolumeCalculationByUsersAndDevicesIdLast24'
+import GetVolumeCalculationByUsersAndDevicesIdAndDate from '../services/GetVolumeCalculationByUsersAndDevicesIdAndDate'
 import GetSelectedDeviceByUserId from '../services/GetSelectedDeviceByUserId'
 
 import DatePickerIcon from '../assets/datePicker.png'
@@ -108,6 +108,11 @@ const LabelText = styled.Text`
   margin :20px;
 `;
 
+const DatePickerButton = styled.View`
+  margin: 10px;
+  align-items: center;
+`;
+
 
 let interval;
 
@@ -123,7 +128,7 @@ export function GraphicsLevelPage( {navigation} ) {
   const [selectedDeviceLoading, setSelectedDeviceLoading] = useState(true);
   const [selectedDeviceError, setSelectedDeviceError] = useState({});
 
-  const [listVolumeAndBatteryLevel ,setListVolumeAndBatteryLevel] = useState({});
+  const [listVolumeAndBatteryLevel ,setListVolumeAndBatteryLevel] = useState([]);
   const [listVolumeAndBatteryLevelLoading, setListVolumeAndBatteryLevelLoading] = useState(true);
   const [listVolumeAndBatteryLevelError, setListVolumeAndBatteryLevelError] = useState({});
 
@@ -165,10 +170,6 @@ export function GraphicsLevelPage( {navigation} ) {
       retrieveLoggedUser();
   },[])
 
-    useEffect(() => {
-      console.log(logs)
-  },[logs])
-
   useEffect(() => {
     if(!loggedUserLoading){
         handleGetSelectedDeviceByUserId();
@@ -177,13 +178,11 @@ export function GraphicsLevelPage( {navigation} ) {
 
 
   useEffect(()=>{
-    handleGetVolumeCalculationByUsersAndDevicesIdLast24()
-  },[selectedDevice,selectedDeviceLoading])
+    handleGetVolumeCalculationByUsersAndDevicesIdAndDate()
+  },[selectedDevice,selectedDeviceLoading, date])
  
   useEffect(()=>{
-    if(!listVolumeAndBatteryLevelLoading){
-      console.log("listVolumeAndBatteryLevel")
-      console.log(listVolumeAndBatteryLevel)
+    if(!listVolumeAndBatteryLevelLoading && listVolumeAndBatteryLevel && listVolumeAndBatteryLevel.length > 0){
       setLogs(
         listVolumeAndBatteryLevel.map((elm)=>{
           return {
@@ -243,16 +242,14 @@ export function GraphicsLevelPage( {navigation} ) {
     }
 };
 
-const handleGetVolumeCalculationByUsersAndDevicesIdLast24 = async () => {
-
+const handleGetVolumeCalculationByUsersAndDevicesIdAndDate = async () => {
+    console.log(date)
     setListVolumeAndBatteryLevelLoading(true);
 
     if(!selectedDeviceLoading && selectedDevice.userDevice.usersAndDevicesId){
-    // console.log("Ta chamando o handleGetVolumeCalculationByUsersAndDevicesId para selectedDevice.usersAndDevicesId: ", selectedDevice.usersAndDevicesId)
-
     try {
         const [calculationResp] = await Promise.all([
-          GetVolumeCalculationByUsersAndDevicesIdLast24(selectedDevice.userDevice.usersAndDevicesId, formatDatePicker(date))
+          GetVolumeCalculationByUsersAndDevicesIdAndDate(selectedDevice.userDevice.usersAndDevicesId, formatDatePicker(date))
         ]);
         setListVolumeAndBatteryLevel(calculationResp.data)
 
@@ -261,16 +258,10 @@ const handleGetVolumeCalculationByUsersAndDevicesIdLast24 = async () => {
       catch (err) {
         if(err.message === "Request failed with status code 404"){
             handleVolumeNotFound();
-          console.log(err);
-
         }else{
           Alert.alert("Error Message: ", err.message);
-        console.log(err);
-
         }
         setListVolumeAndBatteryLevelError(err);
-        console.log(err);
-
       }
       finally {
         setListVolumeAndBatteryLevelLoading(false);
@@ -280,12 +271,12 @@ const handleGetVolumeCalculationByUsersAndDevicesIdLast24 = async () => {
 
 
 const handleVolumeNotFound = () => {
-    Alert.alert("Error Message: ", "O dispositivo ainda nao realizou nenhuma leitura por favor aguarde (1h)");
+    Alert.alert("Error Message: ", "Não foram encontrados registros para essa data");
 }
 
 
 const handleUserNotLogged = () => {
-  Alert.alert("Usuario nao registrado", `Por favor insira o usuário ID`);
+  Alert.alert("Usuario não registrado", `Por favor insira o usuário ID`);
   window.clearInterval(interval)
   navigation.push('Login');
 
@@ -295,7 +286,7 @@ const handleUserNotLogged = () => {
 const onChange = (event, selectedDate) => {
   let currentDate = selectedDate;
   if(!selectedDate){
-    currentDate = new Date();
+    currentDate = date
   }
   
   setShow(false);
@@ -337,7 +328,6 @@ const showDatepicker = () => {
 
       const formatDatePicker = (date) => {
         let dateFormatted = ((date.getDate() )) + "/" + ((date.getMonth() + 1)) + "/" + date.getFullYear(); 
-        console.log(dateFormatted);
         return dateFormatted
       }
 
@@ -413,82 +403,84 @@ const showDatepicker = () => {
             )
           } */}
 
-          <TouchableOpacity onPress={showDatepicker}>
-            <Image source={DatePickerIcon}></Image>
-          </TouchableOpacity>
+          <DatePickerButton>
+            <TouchableOpacity onPress={showDatepicker}>
+              <Image source={DatePickerIcon}></Image>
+            </TouchableOpacity>
+          </DatePickerButton>
 
 
             
           <LabelText>Data Selecionada: {formatDatePicker(date)}</LabelText>
-          {show && (
-            <DateTimePicker
-            testID="dateTimePicker"
-            value={date}
-            mode={mode}
-            is24Hour={true}
-            onChange={onChange}
-            />
-          )}
-
-
-          { logs.length > 0 ?  (
-            <GraphView>
-              <LineChart
-                
-                bezier
-                data={{
-                  labels: logs.map((item)=>item.Hour),
-                  // labels: logs.map((item)=>item.Date + item.Hour),
-                  datasets: [
-                    {
-                      data: logs.map((item)=>item.VolumeLiters)
-                    }
-                    
-                  ],
-                  legend: ["Nível"] // optional
-
-                }}
-                width={Dimensions.get("window").width*0.97}
-                height={400}
-                yAxisLabel=""
-                yAxisSuffix="L"
-                segments={10}
-                fromZero
-                yAxisInterval={1} // optional, defaults to 1
-                verticalLabelRotation={80}
-                chartConfig={{
-                  backgroundColor: "#0079e2",
-                  backgroundGradientFrom: "#0079e2",
-                  backgroundGradientTo: "#0079e2",
-                  decimalPlaces: 0, // optional, defaults to 2dp
-                  color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
-                  labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
-                  style: {
-                    borderRadius: 16
-                  },
-                  propsForDots: {
-                    r: "2",
-                    strokeWidth: "1",
-                    stroke: "#fff"
-                  },
-                  propsForBackgroundLines: {
-                    strokeDasharray: "1" // solid background lines with no dashes
-                  },
-                  propsForLabels:{
-                    color:'#000',
-                    fontSize: 11,
-
-                  },
-                  
-                }}
-
-                style={{
-                  borderRadius: 10,
-                  paddingTop: 5,
-                  paddingLeft: 10,
-                  paddingRight: 40,
-                }}
+            {show && (
+              <DateTimePicker
+              testID="dateTimePicker"
+              value={date}
+              mode={mode}
+              is24Hour={true}
+              onChange={onChange}
               />
+            )}
+
+
+          { !listVolumeAndBatteryLevelLoading ?  (
+            <GraphView>
+              {logs.length > 0 && (
+                <LineChart
+                  bezier
+                  data={{
+                    labels: logs.map((item)=>item.Hour),
+                    datasets: [
+                      {
+                        data: logs.map((item)=>item.VolumeLiters)
+                      }
+                      
+                    ],
+                    legend: ["Nível"] // optional
+  
+                  }}
+                  width={Dimensions.get("window").width*0.97}
+                  height={350}
+                  yAxisLabel=""
+                  yAxisSuffix="L"
+                  segments={10}
+                  fromZero
+                  yAxisInterval={1} // optional, defaults to 1
+                  verticalLabelRotation={80}
+                  chartConfig={{
+                    backgroundColor: "#0079e2",
+                    backgroundGradientFrom: "#0079e2",
+                    backgroundGradientTo: "#0079e2",
+                    decimalPlaces: 0, // optional, defaults to 2dp
+                    color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+                    labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+                    style: {
+                      borderRadius: 16
+                    },
+                    propsForDots: {
+                      r: "2",
+                      strokeWidth: "1",
+                      stroke: "#fff"
+                    },
+                    propsForBackgroundLines: {
+                      strokeDasharray: "1" // solid background lines with no dashes
+                    },
+                    propsForLabels:{
+                      color:'#000',
+                      fontSize: 11,
+  
+                    },
+                    
+                  }}
+  
+                  style={{
+                    borderRadius: 10,
+                    paddingTop: 5,
+                    paddingLeft: 5,
+                    paddingRight: 40,
+                  }}
+                />
+              )}
             </GraphView>
           )
           :(

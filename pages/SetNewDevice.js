@@ -210,13 +210,6 @@ export function SetNewDevice({ navigation }) {
     }
   }, [waterTankName, deviceId, selectedWaterTank])
 
-
-  useEffect(()=>{
-    console.log("selectedWaterTank haha")
-    console.log(selectedWaterTank)
-  },[selectedWaterTank])
-
-
   const onChangeDeviceIdInput = (inputString) => {
     setDeviceId(inputString);
   }
@@ -251,7 +244,6 @@ export function SetNewDevice({ navigation }) {
     listWaterTankList.map((s, i) => { return <Picker.Item key={i} value={s} label={`${s.brand}: ${s.theoVolume} L`} /> })
   )
 
-  // React.useEffect(console.log("ASDASDASDASD"))
   return (
     <Background>
 

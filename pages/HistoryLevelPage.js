@@ -115,14 +115,12 @@ export function HistoryLevelPage( {navigation} ) {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      console.log("Com internal HistoryLevelPage")
-
       if(!selectedDeviceLoading){
         handleGetVolumeCalculationByUsersAndDevicesIdList();
       }
       else
       { 
-          console.log ("selectedDevice != {},    device not selected")
+          console.log ("device not selected")
       }
     }, MINUTE_MS);
   
@@ -130,22 +128,10 @@ export function HistoryLevelPage( {navigation} ) {
   }, [])
 
   useEffect(() => {
-    console.log("Sem internal")
     if(!selectedDeviceLoading){
       handleGetVolumeCalculationByUsersAndDevicesIdList();
     } 
   }, [selectedDevice, selectedDeviceLoading])
-
-  // useEffect(()=>{
-  //   console.log("currentVolumeAndBatteryLevel")
-  //   console.log(currentVolumeAndBatteryLevel)
-  // },[currentVolumeAndBatteryLevel])
-
-  // useEffect(()=>{
-  //   console.log("logs")
-  //   console.log(logs)
-  // },[logs])
-
 
   useEffect(()=>{
     // const [logs, setLogs] = useState({});
@@ -212,7 +198,6 @@ const handleGetVolumeCalculationByUsersAndDevicesIdList = async () => {
     setCurrentVolumeAndBatteryLevelLoading(true);
 
     if(!selectedDeviceLoading && selectedDevice.userDevice.usersAndDevicesId){
-    // console.log("Ta chamando o handleGetVolumeCalculationByUsersAndDevicesId para selectedDevice.usersAndDevicesId: ", selectedDevice.usersAndDevicesId)
       try {
         const [calculationResp] = await Promise.all([
             GetVolumeCalculationByUsersAndDevicesIdList(selectedDevice.userDevice.usersAndDevicesId)
