@@ -110,7 +110,7 @@ export function SetNewDevice({ navigation }) {
     nunitoLight: require("../assets/fonts/Nunito-Light.ttf"),
     nunitoBold: require("../assets/fonts/Nunito-Bold.ttf")
   });
-  const [selectedWaterTank, setSelectedWaterTank] = useState({});
+  const [selectedWaterTank, setSelectedWaterTank] = useState(null);
   const [deviceId, setDeviceId] = useState("");
   const [waterTankName, setWaterTankName] = useState("");
 
@@ -147,7 +147,7 @@ export function SetNewDevice({ navigation }) {
       }else if(err.message === "Request failed with status code 502"){
         Alert.alert("Message ", "Desculpe estamos tendo problemas com a conexão, certifique-se que está conectado a internet e tente novamente!");
       }else{
-        Alert.alert("Error Message: ", err.message);
+        Alert.alert("Mensagem de Erro: ", err.message);
       }
       setListWaterTankError(err);
     }
@@ -174,7 +174,7 @@ export function SetNewDevice({ navigation }) {
       setNewDeviceResponse(newDevice.data)
 
       Keyboard.dismiss()
-      Alert.alert("Sucesso", "Novo dispositivo salvo")
+      Alert.alert("Sucesso", "Novo dispositivo salvo.")
 
       navigation.push('Devices');
 
@@ -183,15 +183,22 @@ export function SetNewDevice({ navigation }) {
     }
     catch (err) {
       if(err.message === "Request failed with status code 400"){
-        Alert.alert("Error Message: ", "Dispositivo ID ja utilizado, por favor digite outro ID do dispositivo");
-      }
-      if(err.message === "Request failed with status code 404"){
-        Alert.alert("Error Message: ", "Dispositivo não encontrado, certifique-se que digitou corretamente o ID, tente novamente");
-      }else if(err.message === "Request failed with status code 502"){
-        Alert.alert("Message ", "Desculpe estamos tendo problemas com a conexão, certifique-se que está conectado a internet e tente novamente!");
+        Alert.alert("Erro: ", "Dispositivo ID ja utilizado, por favor digite outro ID do dispositivo.");
       }
       else{
-        Alert.alert("Error Message: ", err.message);
+        if(err.message === "Request failed with status code 404"){
+          Alert.alert("Erro: ", "Dispositivo não encontrado, certifique-se que digitou corretamente o ID, tente novamente.");
+        }
+        else
+        {
+          if(err.message === "Request failed with status code 502"){
+            Alert.alert("Erro: ", "Desculpe estamos tendo problemas com a conexão, certifique-se que está conectado a internet e tente novamente!");
+          }
+          else{
+            Alert.alert("Erro: ", err.message);
+          }
+
+        }
       }
       setNewDeviceError(err);
     }
@@ -202,6 +209,7 @@ export function SetNewDevice({ navigation }) {
 
   useEffect(() => {
     if (waterTankName.length > 0 && deviceId.length > 0 && selectedWaterTank) {
+      console.log(selectedWaterTank)
       setDisableSave(false);
     }
     else {
@@ -235,7 +243,7 @@ export function SetNewDevice({ navigation }) {
   };
 
   const handleUserNotLogged = () => {
-    Alert.alert("Usuario nao registrado", `Por favor insira o usuário ID`);
+    Alert.alert("Usuário não registrado.", `Por favor insira o usuário ID.`);
     navigation.navigate('Login');
     // setTimeout(() => {navigation.navigate('SetNewDevice')}, 2000);      
   }
@@ -302,6 +310,8 @@ export function SetNewDevice({ navigation }) {
                 onValueChange={(itemValue, itemIndex) => setSelectedWaterTank(itemValue)}
                 mode={"dropdown"}
               >
+                    <Picker.Item key={Math.random()} value="" label="" />
+
                 {showWaterTankOptions}
               </Picker>
             </InputView>
@@ -328,13 +338,13 @@ export function SetNewDevice({ navigation }) {
           }
         </InputView>
 
-
+{/* 
         <ButtonView>
           <TouchableOpacity
             onPress={() => navigation.push('SetWatertankMeasures')}>
             <Image source={newWaterTank}></Image>
           </TouchableOpacity>
-        </ButtonView>
+        </ButtonView> */}
 
 
         {!disableSave

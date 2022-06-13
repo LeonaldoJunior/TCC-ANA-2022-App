@@ -77,13 +77,13 @@ export function HistoryLevelBatPage( {navigation} ) {
   const [selectedDeviceLoading, setSelectedDeviceLoading] = useState(true);
   const [selectedDeviceError, setSelectedDeviceError] = useState({});
 
-  const [currentVolumeAndBatteryLevel ,setCurrentVolumeAndBatteryLevel] = useState({});
+  const [currentVolumeAndBatteryLevel ,setCurrentVolumeAndBatteryLevel] = useState(null);
   const [currentVolumeAndBatteryLevelLoading, setCurrentVolumeAndBatteryLevelLoading] = useState(true);
   const [currentVolumeAndBatteryLevelError, setCurrentVolumeAndBatteryLevelError] = useState({});
 
   const [logs, setLogs] = useState([]);
 
-  const maxBatLevel = 4.2;
+  const maxBatLevel = 3;
   
 
   const MINUTE_MS = 60000;
@@ -129,7 +129,7 @@ export function HistoryLevelBatPage( {navigation} ) {
   }, [selectedDevice, selectedDeviceLoading])
 
   useEffect(()=>{
-    if(!currentVolumeAndBatteryLevelLoading){
+    if(!currentVolumeAndBatteryLevelLoading && currentVolumeAndBatteryLevel){
       setLogs(
         currentVolumeAndBatteryLevel.map((elm)=>{
           return {
@@ -158,7 +158,7 @@ export function HistoryLevelBatPage( {navigation} ) {
     if(err.message === "Request failed with status code 404"){
         handleDeviceNotSelected();
     }else{
-        Alert.alert("Error Message: ", err.message);
+        Alert.alert("Mensagem de Erro: ", err.message);
     }
     setSelectedDeviceError(err);
     }
@@ -202,7 +202,7 @@ const handleGetVolumeCalculationByUsersAndDevicesIdList = async () => {
         if(err.message === "Request failed with status code 404"){
             handleVolumeNotFound();
         }else{
-          Alert.alert("Error Message: ", err.message);
+          Alert.alert("Mensagem de Erro: ", err.message);
         }
         setCurrentVolumeAndBatteryLevelError(err);
       }
@@ -214,12 +214,12 @@ const handleGetVolumeCalculationByUsersAndDevicesIdList = async () => {
 
 
 const handleVolumeNotFound = () => {
-    Alert.alert("Error Message: ", "O dispositivo ainda nao realizou nenhuma leitura por favor aguarde (1h)");
+    Alert.alert("Mensagem de Erro: ", "O dispositivo ainda não realizou nenhuma leitura por favor aguarde (1h)");
 }
 
 
 const handleUserNotLogged = () => {
-  Alert.alert("Usuario nao registrado", `Por favor insira o usuário ID`);
+  Alert.alert("Usuário não registrado.", `Por favor insira o usuário ID.`);
   navigation.push('Login');
   // setTimeout(() => {navigation.push('SetNewDevice')}, 2000);      
 }
@@ -350,7 +350,7 @@ const handleUserNotLogged = () => {
               }}
             />
           )
-          :(
+          :(  
             <ActivityIndicatorDiv>
                 <ActivityIndicator size="large" color="#0000ff"></ActivityIndicator>
             </ActivityIndicatorDiv>

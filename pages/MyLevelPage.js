@@ -110,9 +110,9 @@ export function MyLevelPage( {navigation} ){
     const [selectedDeviceLoading, setSelectedDeviceLoading] = useState(true);
     const [selectedDeviceError, setSelectedDeviceError] = useState({});
 
-    const [currentVolumeAndBatteryLevel ,setCurrentVolumeAndBatteryLevel] = useState({});
+    const [currentVolumeAndBatteryLevel ,setCurrentVolumeAndBatteryLevel] = useState(null);
     const [currentVolumeAndBatteryLevelLoading, setCurrentVolumeAndBatteryLevelLoading] = useState(true);
-    const [currentVolumeAndBatteryLevelError, setCurrentVolumeAndBatteryLevelError] = useState({});
+    const [currentVolumeAndBatteryLevelError, setCurrentVolumeAndBatteryLevelError] = useState(null);
 
     const MINUTE_MS = 60000;
 
@@ -183,7 +183,7 @@ export function MyLevelPage( {navigation} ){
                 Alert.alert("Message ", "Desculpe estamos tendo problemas com a conexão, certifique-se que está conectado a internet e tente novamente!");
             }
             else{
-                Alert.alert("Error Message: ", err.message);
+                Alert.alert("Mensagem de Erro: ", err.message);
             }
             setCurrentVolumeAndBatteryLevelError(err);
             }
@@ -206,7 +206,7 @@ export function MyLevelPage( {navigation} ){
     }, [selectedDevice, selectedDeviceLoading])
 
     useEffect(() => {
-        if(!currentVolumeAndBatteryLevelLoading){
+        if(!currentVolumeAndBatteryLevelLoading && currentVolumeAndBatteryLevel){
             let currentVolume = currentVolumeAndBatteryLevel.volumeCalc.currentVolume*1000;
             let maxVolume = currentVolumeAndBatteryLevel.waterTank.theoVolume;
             let volumePercentage = currentVolume/maxVolume * 100
@@ -257,7 +257,7 @@ export function MyLevelPage( {navigation} ){
                         Alert.alert("Message ", "Desculpe estamos tendo problemas com a conexão, certifique-se que está conectado a internet e tente novamente!");
                     }
                     else{
-                        Alert.alert("Error Message: ", err.message);
+                        Alert.alert("Mensagem de Erro: ", err.message);
                     }
                     setSelectedDeviceError(err);
                 }   
@@ -282,7 +282,7 @@ export function MyLevelPage( {navigation} ){
                     Alert.alert("Message ", "Desculpe estamos tendo problemas com a conexão tente mais tarde!");
                 }            
                 else{
-                Alert.alert("Error Message: ", err.message);
+                Alert.alert("Mensagem de Erro: ", err.message);
                 }
                 setCurrentVolumeAndBatteryLevelError(err);
             }
@@ -293,18 +293,18 @@ export function MyLevelPage( {navigation} ){
         };
 
         const handleVolumeNotFound = () => {
-            Alert.alert("Error Message: ", "O dispositivo ainda nao realizou nenhuma leitura por favor aguarde (1h)");
+            Alert.alert("", "O dispositivo ainda não realizou nenhuma leitura por favor aguarde (1h).");
         }
     
         const handleUserNotLogged = () => {
-            Alert.alert("Usuario nao registrado", `Por favor insira o usuário ID`);
+            Alert.alert("Usuário não registrado.", `Por favor insira o usuário ID.`);
             window.clearInterval(interval)
             navigation.push('Login');
             // setTimeout(() => {navigation.navigate('SetNewDevice')}, 2000);      
         }
 
         const handleDeviceNotSelected = () => {
-            Alert.alert("Nenhum dispositivo selecionado", `Por favor, selecione um dispositivo`);
+            Alert.alert("Nenhum dispositivo selecionado", `Por favor, selecione um dispositivo.`);
             window.clearInterval(interval)
             navigation.push('Devices');
         }
@@ -341,7 +341,7 @@ export function MyLevelPage( {navigation} ){
                   <Image source={anaIcon}></Image>                                   
               </AnaIcon>
               <TopBarText>Meu nível</TopBarText>
-              { !currentVolumeAndBatteryLevelLoading 
+              { !currentVolumeAndBatteryLevelLoading && currentVolumeAndBatteryLevel
                 ? (
                     <BatIcon 
                         style={{
@@ -367,7 +367,7 @@ export function MyLevelPage( {navigation} ){
             </TopBar>
 
 
-            { !currentVolumeAndBatteryLevelLoading 
+            { !currentVolumeAndBatteryLevelLoading && currentVolumeAndBatteryLevel
                 ?(
                     <LevelText>
                         {selectedDevice.userDevice.waterTankName}
@@ -387,7 +387,7 @@ export function MyLevelPage( {navigation} ){
             }
 
             <WaterTank>
-                {!currentVolumeAndBatteryLevelLoading 
+                {!currentVolumeAndBatteryLevelLoading && currentVolumeAndBatteryLevel
                     ?(
                         <Image source={levelImage}/>                    
                     )

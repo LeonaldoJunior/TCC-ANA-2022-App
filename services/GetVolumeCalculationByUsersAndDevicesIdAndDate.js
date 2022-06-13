@@ -4,10 +4,10 @@ import NotFound  from './Errors/NotFound';
 import BadRequest  from './Errors/NotFound';
 import Unauthorized  from './Errors/NotFound';
 
-const GetVolumeCalculationByUsersAndDevicesIdAndDate = async (deviceId, date) => {
+const GetVolumeCalculationByUsersAndDevicesIdAndDate = async (deviceId, lastDays) => {
     try{
         const api = await API();
-        return await api.get(`UserUi/GetVolumeCalculationByUsersAndDevicesIdAndDate?id=${deviceId}&date=${date}`);
+        return await api.get(`UserUi/GetVolumeCalculationByUsersAndDevicesIdAndDate?id=${deviceId}&lastDays=${lastDays}`);
     }
     
     catch(err){

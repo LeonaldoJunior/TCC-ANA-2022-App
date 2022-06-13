@@ -106,6 +106,7 @@ const LabelText = styled.Text`
   font-size: 18px;
   line-height: 22px;
   margin :20px;
+  margin-left :50px;
 `;
 
 const DatePickerButton = styled.View`
@@ -147,6 +148,7 @@ export function GraphicsLevelPage( {navigation} ) {
   const options = [
     { value: '1', label: '1 dia' },
     { value: '7', label: '7 dias' },
+    { value: '14', label: '14 dias' },
     { value: '15', label: '15 dias' },
     { value: '30', label: '30 dias' },
     { value: '60', label: '60 dias' },
@@ -212,7 +214,7 @@ export function GraphicsLevelPage( {navigation} ) {
     if(err.message === "Request failed with status code 404"){
         handleDeviceNotSelected();
     }else{
-        Alert.alert("Error Message: ", err.message);
+        Alert.alert("Mensagem de Erro: ", err.message);
     }
     setSelectedDeviceError(err);
     }
@@ -242,14 +244,21 @@ export function GraphicsLevelPage( {navigation} ) {
     }
 };
 
+const handleShowLast =  (itemValue, itemIndex) => {
+  setShowLast(itemValue)
+}
+
+useEffect(() => {
+  handleGetVolumeCalculationByUsersAndDevicesIdAndDate()
+},[showLast])
+
 const handleGetVolumeCalculationByUsersAndDevicesIdAndDate = async () => {
-    console.log(date)
     setListVolumeAndBatteryLevelLoading(true);
 
     if(!selectedDeviceLoading && selectedDevice.userDevice.usersAndDevicesId){
     try {
         const [calculationResp] = await Promise.all([
-          GetVolumeCalculationByUsersAndDevicesIdAndDate(selectedDevice.userDevice.usersAndDevicesId, formatDatePicker(date))
+          GetVolumeCalculationByUsersAndDevicesIdAndDate(selectedDevice.userDevice.usersAndDevicesId, showLast)
         ]);
         setListVolumeAndBatteryLevel(calculationResp.data)
 
@@ -259,7 +268,7 @@ const handleGetVolumeCalculationByUsersAndDevicesIdAndDate = async () => {
         if(err.message === "Request failed with status code 404"){
             handleVolumeNotFound();
         }else{
-          Alert.alert("Error Message: ", err.message);
+          Alert.alert("Mensagem de Erro: ", err.message);
         }
         setListVolumeAndBatteryLevelError(err);
       }
@@ -271,12 +280,12 @@ const handleGetVolumeCalculationByUsersAndDevicesIdAndDate = async () => {
 
 
 const handleVolumeNotFound = () => {
-    Alert.alert("Error Message: ", "Não foram encontrados registros para essa data");
+    Alert.alert("Mensagem de Erro: ", "Não foram encontrados registros para essa data");
 }
 
 
 const handleUserNotLogged = () => {
-  Alert.alert("Usuario não registrado", `Por favor insira o usuário ID`);
+  Alert.alert("usuário não registrado", `Por favor insira o usuário ID`);
   window.clearInterval(interval)
   navigation.push('Login');
 
@@ -379,7 +388,7 @@ const showDatepicker = () => {
               </TouchableOpacity>
             </BatIcon>
           </TopBar>            
-          {/* {true 
+          {true 
             ? (
             
               <InputView>
@@ -387,13 +396,11 @@ const showDatepicker = () => {
               <Picker
                 selectedValue={showLast}
                 style={{ height: 50, width: 150, border: 10 }}
-                onValueChange={handleGetVolumeCalculationByUsersAndDevicesIdByDay}
+                onValueChange={handleShowLast}
                 mode={"dropdown"}
               >
-                <Picker.Item label="" value="" />
                 {optionsList}
               </Picker>
-              
               </InputView>
             )
             :(
@@ -401,17 +408,17 @@ const showDatepicker = () => {
                   <ActivityIndicator size="large" color="#0000ff"></ActivityIndicator>
               </ActivityIndicatorDiv>
             )
-          } */}
+          }
 
-          <DatePickerButton>
+          {/* <DatePickerButton>
             <TouchableOpacity onPress={showDatepicker}>
               <Image source={DatePickerIcon}></Image>
             </TouchableOpacity>
-          </DatePickerButton>
+          </DatePickerButton> */}
 
 
             
-          <LabelText>Data Selecionada: {formatDatePicker(date)}</LabelText>
+          {/* <LabelText>Data Selecionada: {formatDatePicker(date)}</LabelText>
             {show && (
               <DateTimePicker
               testID="dateTimePicker"
@@ -420,7 +427,7 @@ const showDatepicker = () => {
               is24Hour={true}
               onChange={onChange}
               />
-            )}
+            )} */}
 
 
           { !listVolumeAndBatteryLevelLoading ?  (
@@ -429,7 +436,7 @@ const showDatepicker = () => {
                 <LineChart
                   bezier
                   data={{
-                    labels: logs.map((item)=>item.Hour),
+                    // labels: logs.map((item)=>item.Hour),
                     datasets: [
                       {
                         data: logs.map((item)=>item.VolumeLiters)

@@ -169,7 +169,7 @@ export function SetWatertankMeasures( {navigation} ) {
       if(err.message === "Request failed with status code 502"){
         Alert.alert("Message ", "Desculpe estamos tendo problemas com a conexão, certifique-se que está conectado a internet e tente novamente!");
       }else{
-        Alert.alert("Error Message: ", err.message);
+        Alert.alert("Mensagem de Erro: ", err.message);
       }
         setNewWaterTankError(err);
     }

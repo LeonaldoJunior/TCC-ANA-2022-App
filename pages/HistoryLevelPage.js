@@ -84,7 +84,7 @@ export function HistoryLevelPage( {navigation} ) {
   const [selectedDeviceLoading, setSelectedDeviceLoading] = useState(true);
   const [selectedDeviceError, setSelectedDeviceError] = useState({});
 
-  const [currentVolumeAndBatteryLevel ,setCurrentVolumeAndBatteryLevel] = useState({});
+  const [currentVolumeAndBatteryLevel ,setCurrentVolumeAndBatteryLevel] = useState(null);
   const [currentVolumeAndBatteryLevelLoading, setCurrentVolumeAndBatteryLevelLoading] = useState(true);
   const [currentVolumeAndBatteryLevelError, setCurrentVolumeAndBatteryLevelError] = useState({});
 
@@ -135,7 +135,7 @@ export function HistoryLevelPage( {navigation} ) {
 
   useEffect(()=>{
     // const [logs, setLogs] = useState({});
-    if(!currentVolumeAndBatteryLevelLoading){
+    if(!currentVolumeAndBatteryLevelLoading && currentVolumeAndBatteryLevel){
       setLogs(
         currentVolumeAndBatteryLevel.map((elm)=>{
           return {
@@ -164,7 +164,7 @@ export function HistoryLevelPage( {navigation} ) {
     if(err.message === "Request failed with status code 404"){
         handleDeviceNotSelected();
     }else{
-        Alert.alert("Error Message: ", err.message);
+        Alert.alert("Mensagem de Erro: ", err.message);
     }
     setSelectedDeviceError(err);
     }
@@ -208,7 +208,7 @@ const handleGetVolumeCalculationByUsersAndDevicesIdList = async () => {
         if(err.message === "Request failed with status code 404"){
             handleVolumeNotFound();
         }else{
-          Alert.alert("Error Message: ", err.message);
+          Alert.alert("Mensagem de Erro: ", err.message);
         }
         setCurrentVolumeAndBatteryLevelError(err);
       }
@@ -220,12 +220,12 @@ const handleGetVolumeCalculationByUsersAndDevicesIdList = async () => {
 
 
 const handleVolumeNotFound = () => {
-    Alert.alert("Error Message: ", "O dispositivo ainda nao realizou nenhuma leitura por favor aguarde (1h)");
+    Alert.alert("", "O dispositivo ainda não realizou nenhuma leitura por favor aguarde (1h).");
 }
 
 
 const handleUserNotLogged = () => {
-  Alert.alert("Usuario nao registrado", `Por favor insira o usuário ID`);
+  Alert.alert("Usuário não registrado.", `Por favor insira o usuário ID.`);
   window.clearInterval(interval)
   navigation.push('Login');
 

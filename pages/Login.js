@@ -3,26 +3,20 @@ import React, { useState, useEffect, children } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
     StyleSheet,
-    Text,
     View,
-    FlatList,
     TouchableOpacity,
     Image,
-    Picker,
     TextInput,
     Alert,
     Keyboard,
     ActivityIndicator
 } from 'react-native';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import styled from 'styled-components';
-import _, { sortedLastIndex } from "lodash"
 import { useFonts } from 'expo-font'
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import Battery from '../assets/battery100.png'
 import backArrow from '../assets/backArrow.png'
-import manual from '../assets/manual.png'
 import login from '../assets/login.png'
 import loginDisabled from '../assets/loginDisabled.png'
 
@@ -110,7 +104,6 @@ export function Login({ navigation }) {
     const [userIdResponseLoading, setUserIdResponseLoading] = useState(false);
     const [userIdResponseError, setUserIdResponseError] = useState({});
 
-
     const hangleCheckUserId = async () => {
         try {
             setUserIdResponseLoading(true);
@@ -121,9 +114,9 @@ export function Login({ navigation }) {
         }
         catch (err) {
             if(err.message === "Request failed with status code 404"){
-              Alert.alert("Mensagem de erro: ", "Desculpe não foi encontrado o usuario tente novamente");
-            }else if(err.message === "Request failed with status code 502"){
-              Alert.alert("Mensagem de erro ", "Desculpe estamos tendo problemas com a conexão, certifique-se que está conectado a internet e tente novamente!");
+              Alert.alert("Mensagem de erro: ", "Desculpe não foi encontrado o usuário tente novamente.");
+            }else if(err.message === "Request failed with status code 502."){
+              Alert.alert("Mensagem de erro: ", "Desculpe estamos tendo problemas com a conexão, certifique-se que está conectado a internet e tente novamente!");
             }else{
               Alert.alert("Mensagem de erro: ", err.message);
             }
@@ -154,15 +147,18 @@ export function Login({ navigation }) {
     const saveUSerIdLocally = async () => {
         try {
             await AsyncStorage.setItem('@loggedUserId', JSON.stringify(userIdResponse))
-
             Keyboard.dismiss()
-            Alert.alert("Sucesso", "Usuario Salvo")
-
-        }
+            Alert.alert("Código válido", "usuário autenticado com sucesso.")
+            setTimeout(() => {navigation.navigate('MyLevelPage')}, 2000);      
+}
         catch (e) {
             console.log(e)
             Alert.alert(e);
         }
+    }
+
+    const redirectToMyLevelPage = () => {
+        navigation.navigate('HistoryLevelBatPage')
     }
 
     const onChangeUserIdInput = (inputString) => {
@@ -207,7 +203,7 @@ export function Login({ navigation }) {
                         </BatIcon>
                     </TopBar>
                     <InputView>
-                        <LabelText>ID de Usuario</LabelText>
+                        <LabelText>ID de usuário</LabelText>
                         <TextInput
                             onChangeText={onChangeUserIdInput}
                             value={userId}

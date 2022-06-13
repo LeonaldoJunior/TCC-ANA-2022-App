@@ -101,7 +101,7 @@ export function Devices({ navigation }) {
   const [devicesListLoading, setDevicesListLoading] = useState(true);
   const [devicesListError, setDevicesListError] = useState({});
 
-  const [selectedDevice, setSelectedDevice] = useState({});
+  const [selectedDevice, setSelectedDevice] = useState(null);
   const [selectedDeviceLoading, setSelectedDeviceLoading] = useState(true);
   const [selectedDeviceError, setSelectedDeviceError] = useState({});
 
@@ -165,7 +165,7 @@ export function Devices({ navigation }) {
       }else if(err.message === "Request failed with status code 502"){
         Alert.alert("Message ", "Desculpe estamos tendo problemas com a conexão, certifique-se que está conectado a internet e tente novamente!");
       }else{
-        Alert.alert("Error Message: ", err.message);
+        Alert.alert("Mensagem de Erro: ", err.message);
       }
       setDevicesListError(err);
     }
@@ -189,11 +189,11 @@ export function Devices({ navigation }) {
       }
       catch (err) {
         if(err.message === "Request failed with status code 404"){
-          Alert.alert("Message: ", "Desculpe nao foi encontrado o dispositivo");
+          Alert.alert("Mensagem: ", "Desculpe não foi encontrado o dispositivo");
         }else if(err.message === "Request failed with status code 502"){
-          Alert.alert("Message ", "");
+          Alert.alert("Mensagem ", "Erro no servidor");
         }else{
-          Alert.alert("Error Message: ", err.message);
+          Alert.alert("Mensagem de Erro: ", err.message);
         }
         setDeleteDeviceError(err);
       }
@@ -207,7 +207,7 @@ export function Devices({ navigation }) {
   }
 
   const handleDeviceListNotFound = () => {
-    Alert.alert("Nenhum dispositivo não encontrado", `Por favor, cadastre novo dispositivo`);
+    Alert.alert("Nenhum dispositivo encontrado", `Por favor, cadastre um novo dispositivo.`);
     navigation.push('SetNewDevice');
     // setTimeout(() => {navigation.navigate('SetNewDevice')}, 2000);      
   }
@@ -218,22 +218,22 @@ export function Devices({ navigation }) {
 
         let formData = new FormData();
         formData.append("userId", loggedUser);
-        formData.append("usersAndDevicesId", itemValue.usersAndDevicesId);
+        formData.append("usersAndDevicesId", itemValue.userDevice.usersAndDevicesId);
 
         const [selectedDeviceResp] = await Promise.all([
           PatchUsersAndDevicesById(formData)
         ]);
-        setSelectedDevice(selectedDeviceResp.data);
+
         navigation.push('Devices');
 
       }
       catch (err) {
         if(err.message === "Request failed with status code 404"){
-          Alert.alert("Message: ", "Desculpe nao foi encontrado o dispositivo");
+          Alert.alert("Message: ", "Desculpe não foi encontrado o dispositivo");
         }else if(err.message === "Request failed with status code 502"){
           Alert.alert("Message ", "Desculpe estamos tendo problemas com a conexão, certifique-se que está conectado a internet e tente novamente!");
         }else{
-          Alert.alert("Error Message: ", err.message);
+          Alert.alert("Mensagem de Erro: ", err.message);
         }
         setSelectedDeviceError(err);
       }
@@ -266,7 +266,7 @@ export function Devices({ navigation }) {
   };
 
   const handleUserNotLogged = () => {
-    Alert.alert("Usuario nao registrado", `Por favor insira o usuário ID`);
+    Alert.alert("Usuário não registrado.", `Por favor insira seu identificador único.`);
     navigation.push('Login');
     // setTimeout(() => {navigation.navigate('SetNewDevice')}, 2000);      
   }
@@ -332,7 +332,7 @@ export function Devices({ navigation }) {
         </InputView>
 
         <InputView>
-          {!selectedDeviceLoading
+          {!selectedDeviceLoading && selectedDevice
           && (
             <SelectedDevicetView>
               <LabelText>
