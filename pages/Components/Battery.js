@@ -7,7 +7,7 @@ const Battery = (props) =>{
     const [isLoading, setIsLoading] = useState(false);
     const [levelImage, setLevelImage] = useState(require("../../assets/battery0.png"));
     
-    const maxBatVolts = 4;
+    const maxBatVolts = 3;
     
     const images = {
       100:  require("../../assets/battery100.png"),

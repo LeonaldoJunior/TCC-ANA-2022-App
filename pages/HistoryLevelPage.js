@@ -80,7 +80,7 @@ export function HistoryLevelPage( {navigation} ) {
   
 
 
-  const [selectedDevice ,setSelectedDevice] = useState({});
+  const [selectedDevice ,setSelectedDevice] = useState(null);
   const [selectedDeviceLoading, setSelectedDeviceLoading] = useState(true);
   const [selectedDeviceError, setSelectedDeviceError] = useState({});
 
@@ -115,12 +115,8 @@ export function HistoryLevelPage( {navigation} ) {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      if(!selectedDeviceLoading){
+      if(selectedDevice){
         handleGetVolumeCalculationByUsersAndDevicesIdList();
-      }
-      else
-      { 
-          console.log ("device not selected")
       }
     }, MINUTE_MS);
   
@@ -242,16 +238,28 @@ const handleUserNotLogged = () => {
       const [ direction, setDirection ] = useState(null)
       const [ selectedColumn, setSelectedColumn ] = useState(null)
 
-      const formatDate = (date) =>{
-        let yyyy = date.substring(0,4);
-        let mm    = date.substring(5,7);
-        let dd    = date.substring(8,10);
-        return `${dd}/${mm}/${yyyy}`;
-      }
+      const formatDate = (dateString) => {
+        let readDate = new Date(dateString)
+        readDate.setHours(readDate.getHours());
 
-      const formatHour = (date) =>{
-        return date.substring(11,19);
-      }
+        var month   = readDate.getMonth() + 1; //months from 1-12
+        var day     = readDate.getDate();
+        var year    = readDate.getFullYear();
+
+        return `${('0' + day).slice(-2)}/${('0' + month).slice(-2)}/${year}`;
+      } 
+
+      const formatHour = (dateString) => {
+        let readDate = new Date(dateString)
+        readDate.setHours(readDate.getHours());
+
+        var seconds = readDate.getSeconds();
+        var minutes = readDate.getMinutes();
+        var hour = readDate.getHours();
+
+        return `${('0' + hour).slice(-2)}:${('0' + minutes).slice(-2)}:${('0' + seconds).slice(-2)}`;
+      } 
+
 
       const calcVolumePercentage = (data) =>{
         let currentVolume = data.volumeCalc.currentVolume*1000;

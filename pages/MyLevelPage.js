@@ -311,9 +311,11 @@ export function MyLevelPage( {navigation} ){
 
         const formatDate = (dateString) => {
             let readDate = new Date(dateString)
-            var month   = readDate.getUTCMonth() + 1; //months from 1-12
-            var day     = readDate.getUTCDate();
-            var year    = readDate.getUTCFullYear();
+            readDate.setHours(readDate.getHours());
+
+            var month   = readDate.getMonth() + 1; //months from 1-12
+            var day     = readDate.getDate();
+            var year    = readDate.getFullYear();
             
             var seconds = readDate.getSeconds();
             var minutes = readDate.getMinutes();
