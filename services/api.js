@@ -3,8 +3,8 @@ import axios from "axios";
 export default async function createAPI(){
     try{
         return axios.create({
-            baseURL: `http://tccana-backend.azurewebsites.net/api/`,
-            // baseURL: `https://a030-2804-f24-c1d5-500-7ca2-29cb-7cb3-65c3.ngrok.io/api/`,
+            baseURL: `https://tccana-backend.azurewebsites.net/api/`,
+            // baseURL: `https://6c12-2001-1284-f016-640a-151e-7f4e-1541-5ce7.ngrok.io/api/`,
             headers: {
                 "Content-Type": "application/json"
             },
@@ -13,6 +13,10 @@ export default async function createAPI(){
     catch(error){
 
         console.log(error);
+
+
+
+        
     }
 }
 

@@ -209,7 +209,7 @@ export function SetNewDevice({ navigation }) {
 
   useEffect(() => {
     if (waterTankName.length > 0 && deviceId.length > 0 && selectedWaterTank) {
-      console.log(selectedWaterTank)
+      // console.log(selectedWaterTank)
       setDisableSave(false);
     }
     else {

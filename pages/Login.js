@@ -128,13 +128,13 @@ export function Login({ navigation }) {
     }
 
     useEffect(() => {
-        if(userIdResponse.length == 5){
+        if(userIdResponse.length == 10){
             saveUSerIdLocally();
         }
     }, [userIdResponse])
 
     useEffect(() => {
-        if (userId.length == 5) {
+        if (userId.length == 10) {
             setDisableLogin(false);
         }
         else {

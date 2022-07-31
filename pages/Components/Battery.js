@@ -21,7 +21,8 @@ const Battery = (props) =>{
     
     useEffect(() => {
         if(props.currentBatLevel >= 0){
-            let batLevelPercentage = props.currentBatLevel/maxBatVolts * 100
+
+            let batLevelPercentage = ((142.85*props.currentBatLevel) - 365.71);
             let roundedNumber = Math.round(batLevelPercentage/20)*20
             setLevelImage(images[roundedNumber])
         }

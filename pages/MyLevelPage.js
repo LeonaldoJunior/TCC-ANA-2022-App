@@ -192,7 +192,7 @@ export function MyLevelPage( {navigation} ){
             }
         }
 
-        },10000)
+        },60000)
         return ()=> clearInterval(interval)
     },[selectedDeviceLoading,selectedDevice ])
 
