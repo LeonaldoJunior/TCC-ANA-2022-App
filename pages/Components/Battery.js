@@ -25,6 +25,12 @@ const Battery = (props) =>{
             let batLevelPercentage = ((142.85*props.currentBatLevel) - 365.71);
             let roundedNumber = Math.round(batLevelPercentage/20)*20
             setLevelImage(images[roundedNumber])
+            if(roundedNumber >= 100){
+                setLevelImage(images[100])
+            }
+            if(roundedNumber <= 1){
+                setLevelImage(images[0])
+            }
         }
     },[props.currentBatLevel])
     
